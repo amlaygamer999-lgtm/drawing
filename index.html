@@ -31,7 +31,8 @@
             background: linear-gradient(135deg, #0f172a 0%, #312e81 100%);
         }
 
-        .screen { display: none; width: 100%; height: 100%; flex-direction: column; align-items: center; justify-content: flex-start; position: absolute; top: 0; left: 0; overflow-y: auto; padding-bottom: 20px; z-index: 10; }
+        /* جعل الشاشة قابلة للنزول التلقائي السلس */
+        .screen { display: none; width: 100%; height: 100%; flex-direction: column; align-items: center; justify-content: flex-start; position: absolute; top: 0; left: 0; overflow-y: auto; padding-bottom: 20px; z-index: 10; scroll-behavior: smooth; }
         .active { display: flex; }
 
         .glass-panel {
@@ -52,22 +53,28 @@
         .btn-disabled { background: #555 !important; box-shadow: none !important; cursor: not-allowed; }
 
         /* Canvas Styles */
-        #draw-canvas { background: white; border-radius: 15px; border: 3px solid var(--primary); cursor: crosshair; touch-action: none; width: 100%; max-width: 400px; height: 400px; display: block; margin: 0 auto; }
-        .color-palette { display: flex; justify-content: center; gap: 10px; margin: 15px 0; }
-        .color-btn { width: 40px; height: 40px; border-radius: 50%; border: 2px solid white; cursor: pointer; box-shadow: 0 2px 10px rgba(0,0,0,0.5); }
-        .color-btn.active { border: 4px solid var(--gold); transform: scale(1.1); }
+        #draw-canvas { background: white; border-radius: 15px; border: 3px solid var(--primary); cursor: crosshair; touch-action: none; width: 100%; max-width: 400px; height: 400px; display: block; margin: 0 auto; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+        
+        .tools-row { display: flex; justify-content: center; gap: 8px; margin: 10px 0; flex-wrap: wrap; }
+        .tool-btn { background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.3); color: white; padding: 8px 15px; border-radius: 10px; cursor: pointer; font-size: 1.2rem; transition: 0.2s; }
+        .tool-btn.active { background: var(--primary); border-color: var(--gold); transform: scale(1.05); }
+
+        .color-palette { display: flex; justify-content: center; gap: 8px; margin: 15px 0; flex-wrap: wrap; max-width: 400px; margin: 10px auto; }
+        .color-btn { width: 35px; height: 35px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.5); cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.5); transition: 0.2s;}
+        .color-btn.active { border: 3px solid white; transform: scale(1.2); box-shadow: 0 0 10px var(--gold); }
+        .eraser-btn { display: flex; justify-content: center; align-items: center; background: white; font-size: 1.2rem; border-color: #ccc; }
         
         .input-text { width: 100%; padding: 15px; font-size: 1.5rem; text-align: center; border-radius: 15px; border: 2px solid var(--primary); background: rgba(0,0,0,0.5); color: white; margin-bottom: 20px; font-family: 'Tajawal'; }
         
         /* TV Presentation Styles */
         .tv-title { font-size: 4rem; color: var(--gold); text-shadow: 0 0 20px rgba(245,158,11,0.5); margin-bottom: 10px; }
         .tv-subtitle { font-size: 2rem; color: var(--primary); margin-bottom: 30px; }
-        .pres-card { background: rgba(255,255,255,0.1); border: 2px solid var(--primary); border-radius: 20px; padding: 30px; margin-bottom: 20px; width: 80%; max-width: 800px; text-align: center; animation: fadeIn 0.5s ease-in-out;}
+        .pres-card { background: rgba(255,255,255,0.1); border: 2px solid var(--primary); border-radius: 20px; padding: 30px; margin-bottom: 20px; width: 80%; max-width: 800px; text-align: center; animation: fadeIn 0.5s ease-in-out; box-shadow: 0 10px 30px rgba(0,0,0,0.5);}
         .pres-text { font-size: 2.5rem; font-weight: bold; color: white; margin: 10px 0; }
         .pres-img { max-width: 100%; max-height: 400px; border-radius: 15px; border: 4px solid white; background: white;}
         .pres-author { color: var(--gold); font-size: 1.5rem; margin-top: 10px; }
         
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
 
         h1, h2, h3 { text-shadow: 0 2px 5px rgba(0,0,0,0.8); margin-top: 0; }
         #qr-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 200; flex-direction: column; justify-content: center; align-items: center; backdrop-filter:blur(10px);}
@@ -118,10 +125,10 @@
         <h1 class="tv-title" id="tv-title">غرفة الانتظار</h1>
         <h2 class="tv-subtitle" id="tv-subtitle">بانتظار بدء اللعبة...</h2>
         
-        <div id="tv-players-status" class="players-status" style="max-width:800px;"></div>
+        <div id="tv-players-status" class="players-status" style="max-width:800px; margin-bottom: 50px;"></div>
         
-        <div id="tv-presentation" style="display:none; width:100%; flex-direction:column; align-items:center;">
-            <!-- مساحة عرض النتائج -->
+        <div id="tv-presentation" style="display:none; width:100%; flex-direction:column; align-items:center; padding-bottom: 50px;">
+            <!-- مساحة عرض النتائج التلقائية -->
         </div>
     </div>
 
@@ -138,40 +145,56 @@
         <div id="p-dashboard" style="display:none; width:100%; padding:10px;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; background:rgba(0,0,0,0.5); padding:10px 20px; border-radius:15px;">
                 <h3 id="p-my-name" style="margin:0; color:var(--primary);">...</h3>
-                <button onclick="logoutPlayer()" style="background:rgba(239, 68, 68, 0.2); border:1px solid var(--danger); color:var(--danger); border-radius:8px; padding:5px 10px; font-weight:bold; cursor:pointer; font-family:'Tajawal';">خروج</button>
+                <button onclick="logoutPlayer()" style="background:rgba(239, 68, 68, 0.2); border:1px solid var(--danger); color:var(--danger); border-radius:8px; padding:5px 10px; font-weight:bold; cursor:pointer; font-family:'Tajawal';">تغيير الاسم</button>
             </div>
 
             <!-- Wait -->
             <div id="p-wait" class="glass-panel" style="display:none; margin: 0 auto;">
                 <h1 style="font-size:3rem; margin:10px;">⏳</h1>
                 <h3>انتظر اللاعبين...</h3>
-                <p style="color:#aaa;" id="p-wait-msg">تم إرسال إجابتك، ننتظر الباقين.</p>
+                <p style="color:#aaa;" id="p-wait-msg">تم الإرسال، ننتظر الباقين.</p>
             </div>
 
             <!-- Phase 1: Write -->
             <div id="p-write" class="glass-panel" style="display:none; margin: 0 auto;">
                 <h2 style="color:var(--gold);">✍️ اكتب جملة غريبة</h2>
-                <p style="color:#ccc;">اكتب شيء مضحك وصعب الرسم! (مثال: فيل يسبح في قهوة)</p>
-                <input type="text" id="in-write" class="input-text" placeholder="اكتب جملتك هنا...">
+                <p style="color:#ccc;">اكتب شيء مضحك وصعب الرسم!</p>
+                <input type="text" id="in-write" class="input-text" placeholder="مثال: قطة تسوق طيارة...">
                 <button class="btn-main" onclick="submitPhase1()">إرسال الجملة 🚀</button>
             </div>
 
             <!-- Phase 2: Draw -->
-            <div id="p-draw" class="glass-panel" style="display:none; margin: 0 auto; padding:10px;">
-                <h2 style="color:var(--secondary); margin-bottom:5px;">🎨 ارسم هذي الجملة:</h2>
-                <h3 id="draw-prompt" style="color:white; background:rgba(255,255,255,0.1); padding:10px; border-radius:10px;">...</h3>
+            <div id="p-draw" class="glass-panel" style="display:none; margin: 0 auto; padding:10px; width: 100%;">
+                <h2 style="color:var(--secondary); margin-bottom:5px;">🎨 ارسم:</h2>
+                <h3 id="draw-prompt" style="color:white; background:rgba(255,255,255,0.1); padding:10px; border-radius:10px; margin-bottom:10px;">...</h3>
                 
+                <!-- أدوات الرسم الجديدة -->
+                <div class="tools-row">
+                    <button class="tool-btn active" onclick="setTool('pen', this)" title="قلم حر">✏️ قلم</button>
+                    <button class="tool-btn" onclick="setTool('line', this)" title="خط مستقيم">📏 خط</button>
+                    <button class="tool-btn" onclick="setTool('circle', this)" title="دائرة">⭕ دائرة</button>
+                    <button class="tool-btn" onclick="setTool('rect', this)" title="مربع/مستطيل">⬜ مربع</button>
+                </div>
+
                 <canvas id="draw-canvas" width="400" height="400"></canvas>
                 
+                <!-- ألوان موسعة -->
                 <div class="color-palette">
-                    <div class="color-btn active" style="background:black;" onclick="setColor('black', this)"></div>
-                    <div class="color-btn" style="background:red;" onclick="setColor('red', this)"></div>
-                    <div class="color-btn" style="background:blue;" onclick="setColor('blue', this)"></div>
-                    <div class="color-btn" style="background:green;" onclick="setColor('green', this)"></div>
-                    <div class="color-btn" style="background:white; border-color:#ccc;" onclick="setColor('white', this)" title="ممحاة">🧹</div>
+                    <div class="color-btn active" style="background:#000000;" onclick="setColor('#000000', this)"></div>
+                    <div class="color-btn" style="background:#ef4444;" onclick="setColor('#ef4444', this)"></div>
+                    <div class="color-btn" style="background:#3b82f6;" onclick="setColor('#3b82f6', this)"></div>
+                    <div class="color-btn" style="background:#10b981;" onclick="setColor('#10b981', this)"></div>
+                    <div class="color-btn" style="background:#eab308;" onclick="setColor('#eab308', this)"></div>
+                    <div class="color-btn" style="background:#f97316;" onclick="setColor('#f97316', this)"></div>
+                    <div class="color-btn" style="background:#a855f7;" onclick="setColor('#a855f7', this)"></div>
+                    <div class="color-btn" style="background:#ec4899;" onclick="setColor('#ec4899', this)"></div>
+                    <div class="color-btn" style="background:#8b4513;" onclick="setColor('#8b4513', this)"></div>
+                    <div class="color-btn" style="background:#06b6d4;" onclick="setColor('#06b6d4', this)"></div>
+                    <div class="color-btn" style="background:#64748b;" onclick="setColor('#64748b', this)"></div>
+                    <div class="color-btn eraser-btn" onclick="setColor('white', this)" title="ممحاة">🧹</div>
                 </div>
                 
-                <div style="display:flex; gap:10px;">
+                <div style="display:flex; gap:10px; margin-top: 10px;">
                     <button class="btn-main" style="background:#555; font-size:1rem; padding:10px;" onclick="clearCanvas()">مسح الكل</button>
                     <button class="btn-main btn-green" style="font-size:1rem; padding:10px;" onclick="submitPhase2()">إرسال الرسمة 🚀</button>
                 </div>
@@ -181,7 +204,7 @@
             <div id="p-guess" class="glass-panel" style="display:none; margin: 0 auto;">
                 <h2 style="color:var(--accent);">🤔 وش هذي الرسمة؟</h2>
                 <img id="guess-img" src="" style="width:100%; max-width:400px; background:white; border-radius:15px; border:3px solid var(--primary); margin-bottom:15px;">
-                <input type="text" id="in-guess" class="input-text" placeholder="اكتب تخمينك...">
+                <input type="text" id="in-guess" class="input-text" placeholder="اكتب تخمينك هنا...">
                 <button class="btn-main" onclick="submitPhase3()">إرسال التخمين 🚀</button>
             </div>
             
@@ -211,9 +234,12 @@
                 <h3 style="color:var(--gold);">تحكم العرض</h3>
                 <div id="pres-players-list" style="display:flex; flex-direction:column; gap:10px;"></div>
                 <button class="btn-main" style="margin-top:20px;" onclick="nextPresStep()">▶️ الخطوة التالية في العرض</button>
+                
+                <!-- زر إعادة اللعبة بنفس اللاعبين (التطوير الجديد) -->
+                <button class="btn-main btn-green" style="margin-top:20px;" onclick="playAgainSamePlayers()">🔄 إعادة اللعب بنفس اللاعبين</button>
             </div>
 
-            <button class="btn-main" style="background:var(--danger);" onclick="resetGame()">⚠️ إنهاء وتصفير اللعبة</button>
+            <button class="btn-main" style="background:var(--danger);" onclick="resetGame()">⚠️ إنهاء وتصفير اللعبة بالكامل</button>
             
             <h3 style="margin-top:30px; border-bottom:1px solid #444; padding-bottom:10px;">حالة اللاعبين</h3>
             <div id="adm-players-status" class="players-status"></div>
@@ -257,7 +283,6 @@
         }
         function goTV() { window.location.href = `?room=${roomId}&mode=tv`; }
 
-        // توليد باركود برقم سري يتغير كل 3 ثواني
         function generateQRs() {
             const base = window.location.href.split('?')[0];
             const aUrl = base + `?room=${roomId}&role=admin`;
@@ -284,6 +309,7 @@
                 const sub = document.getElementById('tv-subtitle');
                 const statusGrid = document.getElementById('tv-players-status');
                 const presDiv = document.getElementById('tv-presentation');
+                const tvScreen = document.getElementById('scr-tv');
                 
                 statusGrid.innerHTML = '';
                 presDiv.style.display = 'none';
@@ -292,7 +318,7 @@
                 let players = data.players || {};
 
                 if(data.state === 'lobby') {
-                    title.innerText = "غرفة الانتظار"; sub.innerText = "امسح الباركود للانضمام...";
+                    title.innerText = "غرفة الانتظار"; sub.innerText = "امسح الباركود للانضمام، أو انتظر الإعادة...";
                     Object.keys(players).forEach(pid => {
                         statusGrid.innerHTML += `<div class="status-badge status-done">${players[pid].name} (جاهز)</div>`;
                     });
@@ -324,12 +350,17 @@
                         const step = data.presentation.step;
                         
                         let html = '';
-                        if(step >= 1) html += `<div class="pres-card"><div class="pres-author">بدأت الجملة من: ${cAuthor}</div><div class="pres-text">"${chain.write}"</div></div>`;
-                        if(step >= 2) html += `<div class="pres-card"><div class="pres-author">الفنان اللي رسمها: ${players[chain.drawerId].name}</div><img class="pres-img" src="${chain.draw}"></div>`;
-                        if(step >= 3) html += `<div class="pres-card"><div class="pres-author">الضحية اللي خمن: ${players[chain.guesserId].name}</div><div class="pres-text" style="color:var(--danger);">"${chain.guess}"</div></div>`;
+                        if(step >= 1) html += `<div class="pres-card" id="pres-1"><div class="pres-author">بدأت الجملة من: ${cAuthor}</div><div class="pres-text">"${chain.write}"</div></div>`;
+                        if(step >= 2) html += `<div class="pres-card" id="pres-2"><div class="pres-author">الفنان اللي رسمها: ${players[chain.drawerId].name}</div><img class="pres-img" src="${chain.draw}"></div>`;
+                        if(step >= 3) html += `<div class="pres-card" id="pres-3"><div class="pres-author">الضحية اللي خمن: ${players[chain.guesserId].name}</div><div class="pres-text" style="color:var(--danger);">"${chain.guess}"</div></div>`;
                         
                         presDiv.innerHTML = html;
-                        window.scrollTo(0, document.body.scrollHeight);
+                        
+                        // النزول التلقائي السلس للتلفزيون
+                        setTimeout(() => {
+                            tvScreen.scrollTo({ top: tvScreen.scrollHeight, behavior: 'smooth' });
+                        }, 200);
+
                     } else {
                         presDiv.innerHTML = `<h2 style="color:white;">الأدمن يجهز الملفات السريّة...</h2>`;
                     }
@@ -337,27 +368,50 @@
             });
         }
 
-        // --- Canvas Logic ---
+        // --- Advanced Canvas Logic (Colors & Shapes) ---
         let canvas, ctx, isDrawing = false;
-        let currentColor = 'black';
+        let currentColor = '#000000';
+        let currentTool = 'pen';
+        let startX, startY;
+        let canvasSnapshot;
+
         function initCanvas() {
             canvas = document.getElementById('draw-canvas');
             ctx = canvas.getContext('2d');
             canvas.width = 400; canvas.height = 400;
             clearCanvas(); 
 
-            const startPos = (e) => { e.preventDefault(); isDrawing = true; draw(e); };
-            const endPos = (e) => { e.preventDefault(); isDrawing = false; ctx.beginPath(); };
+            const startPos = (e) => { 
+                e.preventDefault(); 
+                isDrawing = true; 
+                const rect = canvas.getBoundingClientRect();
+                const scaleX = canvas.width / rect.width;
+                const scaleY = canvas.height / rect.height;
+                let clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                let clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                startX = (clientX - rect.left) * scaleX;
+                startY = (clientY - rect.top) * scaleY;
+                
+                // حفظ نسخة من الشاشة قبل رسم الأشكال
+                canvasSnapshot = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                
+                if (currentTool === 'pen') draw(e); // للرسم المباشر
+            };
+
+            const endPos = (e) => { 
+                e.preventDefault(); 
+                isDrawing = false; 
+                ctx.beginPath(); 
+            };
+
             const draw = (e) => {
                 e.preventDefault();
                 if(!isDrawing) return;
                 const rect = canvas.getBoundingClientRect();
                 const scaleX = canvas.width / rect.width;
                 const scaleY = canvas.height / rect.height;
-                
                 let clientX = e.touches ? e.touches[0].clientX : e.clientX;
                 let clientY = e.touches ? e.touches[0].clientY : e.clientY;
-                
                 let x = (clientX - rect.left) * scaleX;
                 let y = (clientY - rect.top) * scaleY;
 
@@ -365,10 +419,26 @@
                 ctx.lineCap = 'round';
                 ctx.strokeStyle = currentColor;
 
-                ctx.lineTo(x, y);
-                ctx.stroke();
-                ctx.beginPath();
-                ctx.moveTo(x, y);
+                if (currentTool === 'pen') {
+                    ctx.lineTo(x, y);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(x, y);
+                } else {
+                    // مسح الشاشة واستعادة النسخة المحفوظة للرسم الحي للأشكال
+                    ctx.putImageData(canvasSnapshot, 0, 0);
+                    ctx.beginPath();
+                    if (currentTool === 'line') {
+                        ctx.moveTo(startX, startY);
+                        ctx.lineTo(x, y);
+                    } else if (currentTool === 'rect') {
+                        ctx.rect(startX, startY, x - startX, y - startY);
+                    } else if (currentTool === 'circle') {
+                        let radius = Math.sqrt(Math.pow(x - startX, 2) + Math.pow(y - startY, 2));
+                        ctx.arc(startX, startY, radius, 0, 2 * Math.PI);
+                    }
+                    ctx.stroke();
+                }
             };
 
             canvas.addEventListener('mousedown', startPos);
@@ -379,11 +449,19 @@
             canvas.addEventListener('touchend', endPos, {passive: false});
             canvas.addEventListener('touchmove', draw, {passive: false});
         }
+
         function setColor(c, btn) {
             currentColor = c;
             document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
         }
+
+        function setTool(tool, btn) {
+            currentTool = tool;
+            document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        }
+
         function clearCanvas() {
             ctx.fillStyle = "white";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -391,12 +469,10 @@
 
         // --- Player Logic ---
         function initPlayer() {
-            // كود الذكاء للباركود: يكتشف إذا كان هذا مسح جديد للباركود أو مجرد تحديث للصفحة
             const urlScanId = new URLSearchParams(window.location.search).get('scan');
             const savedScanId = localStorage.getItem('abadi_last_scan');
             
             if (urlScanId && urlScanId !== savedScanId) {
-                // مسحة جديدة للباركود! امسح بيانات اللاعب القديم
                 logoutPlayerSilent();
                 localStorage.setItem('abadi_last_scan', urlScanId);
             }
@@ -437,6 +513,8 @@
             ['p-wait', 'p-write', 'p-draw', 'p-guess', 'p-look-tv'].forEach(id => {
                 document.getElementById(id).style.display = 'none';
             });
+            document.getElementById('in-write').value = '';
+            document.getElementById('in-guess').value = '';
         }
 
         let currentTargetChain = null; 
@@ -522,14 +600,12 @@
 
                 const list = document.getElementById('adm-players-status');
                 list.innerHTML = '';
-                let allDone = true;
                 
                 if(data.players) {
                     Object.keys(data.players).forEach(pid => {
                         const p = data.players[pid];
                         let isDone = (p.status === 'done');
-                        list.innerHTML += `<div style="display:flex; justify-content:space-between; align-items:center;" class="status-badge ${isDone?'status-done':'status-wait'}"><span>${p.name}</span><button onclick="if(confirm('حذف؟')) db.ref('drawgame/${roomId}/players/${pid}').remove()" style="background:none; border:none; color:inherit; cursor:pointer;">🗑️</button></div>`;
-                        if(!isDone) allDone = false;
+                        list.innerHTML += `<div style="display:flex; justify-content:space-between; align-items:center;" class="status-badge ${isDone?'status-done':'status-wait'}"><span>${p.name}</span><button onclick="if(confirm('حذف اللاعب؟')) db.ref('drawgame/${roomId}/players/${pid}').remove()" style="background:none; border:none; color:inherit; cursor:pointer; font-size:1.2rem;">🗑️</button></div>`;
                     });
                 }
 
@@ -597,8 +673,27 @@
             });
         }
 
+        // --- الميزة الجديدة: إعادة اللعب بنفس اللاعبين ---
+        function playAgainSamePlayers() {
+            if(confirm('هل تريد بدء جولة جديدة بنفس اللاعبين الحاليين؟')) {
+                db.ref(`drawgame/${roomId}/players`).once('value', snap => {
+                    let updates = { 
+                        state: 'lobby', 
+                        chains: null, 
+                        presentation: null,
+                        order: null
+                    };
+                    // إرجاع حالة جميع اللاعبين إلى الانتظار
+                    Object.keys(snap.val()||{}).forEach(pid => { 
+                        updates[`players/${pid}/status`] = 'wait'; 
+                    });
+                    db.ref(`drawgame/${roomId}`).update(updates);
+                });
+            }
+        }
+
         function resetGame() { 
-            if(confirm('تصفير وحذف الكل؟')) db.ref(`drawgame/${roomId}`).set({state:'lobby'}); 
+            if(confirm('تصفير وحذف جميع اللاعبين بالكامل؟')) db.ref(`drawgame/${roomId}`).set({state:'lobby'}); 
         }
 
     </script>
