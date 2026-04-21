@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>تلفون خربان بالرسم PRO 🎨</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-dark: #0f172a; 
+            --primary: #8b5cf6; /* لون بنفسجي فني */
+            --secondary: #ec4899; /* لون وردي */
+            --accent: #10b981; 
+            --danger: #ef4444; 
+            --text: #f8fafc;
+            --gold: #f59e0b; 
+            --panel-bg: rgba(15, 23, 42, 0.85); 
+            --panel-border: rgba(139, 92, 246, 0.4); 
+        }
+
+        * { box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; font-family: 'Tajawal', sans-serif; }
+
+        body {
+            margin: 0; padding: 0; color: var(--text); height: 100vh; overflow: hidden;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            background: linear-gradient(135deg, #0f172a 0%, #312e81 100%);
+        }
+
+        .screen { display: none; width: 100%; height: 100%; flex-direction: column; align-items: center; justify-content: flex-start; position: absolute; top: 0; left: 0; overflow-y: auto; padding-bottom: 20px; z-index: 10; }
+        .active { display: flex; }
+
+        .glass-panel {
+            background: var(--panel-bg); backdrop-filter: blur(15px); 
+            border: 1px solid var(--panel-border); border-radius: 20px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6), 0 0 15px rgba(139, 92, 246, 0.1) inset;
+            padding: 20px; text-align: center; width: 95%; max-width: 600px; margin: 10px 0;
+        }
+
+        .btn-main {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white; border: none; padding: 15px 30px; font-size: 1.2rem; 
+            font-weight: bold; border-radius: 50px; cursor: pointer; margin: 5px; 
+            width: 100%; box-shadow: 0 5px 20px rgba(139, 92, 246, 0.4); transition: 0.2s;
+        }
+        .btn-main:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(236, 72, 153, 0.6); }
+        .btn-green { background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 5px 20px rgba(16, 185, 129, 0.4); }
+        .btn-disabled { background: #555 !important; box-shadow: none !important; cursor: not-allowed; }
+
+        /* Canvas Styles */
+        #draw-canvas { background: white; border-radius: 15px; border: 3px solid var(--primary); cursor: crosshair; touch-action: none; width: 100%; max-width: 400px; height: 400px; display: block; margin: 0 auto; }
+        .color-palette { display: flex; justify-content: center; gap: 10px; margin: 15px 0; }
+        .color-btn { width: 40px; height: 40px; border-radius: 50%; border: 2px solid white; cursor: pointer; box-shadow: 0 2px 10px rgba(0,0,0,0.5); }
+        .color-btn.active { border: 4px solid var(--gold); transform: scale(1.1); }
+        
+        .input-text { width: 100%; padding: 15px; font-size: 1.5rem; text-align: center; border-radius: 15px; border: 2px solid var(--primary); background: rgba(0,0,0,0.5); color: white; margin-bottom: 20px; font-family: 'Tajawal'; }
+        
+        /* TV Presentation Styles */
+        .tv-title { font-size: 4rem; color: var(--gold); text-shadow: 0 0 20px rgba(245,158,11,0.5); margin-bottom: 10px; }
+        .tv-subtitle { font-size: 2rem; color: var(--primary); margin-bottom: 30px; }
+        .pres-card { background: rgba(255,255,255,0.1); border: 2px solid var(--primary); border-radius: 20px; padding: 30px; margin-bottom: 20px; width: 80%; max-width: 800px; text-align: center; animation: fadeIn 0.5s ease-in-out;}
+        .pres-text { font-size: 2.5rem; font-weight: bold; color: white; margin: 10px 0; }
+        .pres-img { max-width: 100%; max-height: 400px; border-radius: 15px; border: 4px solid white; background: white;}
+        .pres-author { color: var(--gold); font-size: 1.5rem; margin-top: 10px; }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        h1, h2, h3 { text-shadow: 0 2px 5px rgba(0,0,0,0.8); margin-top: 0; }
+        #qr-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 200; flex-direction: column; justify-content: center; align-items: center; backdrop-filter:blur(10px);}
+        
+        .players-status { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; width: 100%; margin-top: 20px;}
+        .status-badge { padding: 10px; border-radius: 10px; font-weight: bold; font-size: 1.1rem; }
+        .status-done { background: rgba(16, 185, 129, 0.2); color: var(--accent); border: 1px solid var(--accent); }
+        .status-wait { background: rgba(239, 68, 68, 0.2); color: var(--danger); border: 1px solid var(--danger); animation: pulse 1s infinite alternate;}
+        @keyframes pulse { from { opacity: 0.6; } to { opacity: 1; } }
+    </style>
+</head>
+<body>
+
+    <div id="scr-landing" class="screen active">
+        <h1 style="font-size:4rem; margin-bottom:0; color:var(--primary); text-align:center;">تلفون خربان <span style="color:var(--secondary);">بالرسم</span></h1>
+        <p style="font-size:1.5rem; color:#ccc; margin-bottom:40px;">اكتب ✍️ ارسم 🎨 خمّن 🤔</p>
+        <button class="btn-main" style="max-width:300px;" onclick="createGame()">إنشاء غرفة جديدة 🚀</button>
+    </div>
+
+    <div id="scr-connect" class="screen">
+        <div class="glass-panel" style="margin-top:50px;">
+            <h2 style="color:var(--primary);">امسح الكود للانضمام</h2>
+            <div id="qr-players" style="background:white; padding:15px; display:inline-block; border-radius:15px; margin: 15px 0;"></div>
+        </div>
+        <button class="btn-main" style="max-width:300px;" onclick="goTV()">شاشة التلفزيون 📺</button>
+        <div style="position:fixed; bottom:15px; left:15px; background:rgba(255,255,255,0.9); padding:10px; border-radius:10px;">
+            <div id="qr-admin"></div>
+            <small style="color:black; font-weight:bold; display:block; text-align:center;">لوحة التحكم</small>
+        </div>
+    </div>
+
+    <div id="scr-tv" class="screen">
+        <div style="position:absolute; top:20px; left:20px; z-index:100;">
+            <button onclick="document.getElementById('qr-modal').style.display='flex'" style="background:var(--primary); border:none; color:white; padding:10px; border-radius:10px; cursor:pointer; font-weight:bold;">الباركود 📱</button>
+        </div>
+        
+        <div id="qr-modal">
+            <div class="glass-panel">
+                <h2 style="color:var(--primary);">انضم للعبة</h2>
+                <div id="tv-qr-img" style="background:white; padding:15px; border-radius:15px; display:inline-block;"></div>
+                <button onclick="document.getElementById('qr-modal').style.display='none'" class="btn-main" style="background:var(--danger); margin-top:20px;">إغلاق ❌</button>
+            </div>
+        </div>
+
+        <h1 class="tv-title" id="tv-title">غرفة الانتظار</h1>
+        <h2 class="tv-subtitle" id="tv-subtitle">بانتظار بدء اللعبة...</h2>
+        
+        <div id="tv-players-status" class="players-status" style="max-width:800px;"></div>
+        
+        <div id="tv-presentation" style="display:none; width:100%; flex-direction:column; align-items:center;">
+            </div>
+    </div>
+
+    <div id="scr-player" class="screen">
+        
+        <div id="p-login" class="glass-panel" style="margin-top:50px;">
+            <h2 style="color:var(--primary);">اكتب اسمك للعب</h2>
+            <input type="text" id="p-name-input" class="input-text" placeholder="اسمك..." maxlength="12">
+            <button class="btn-main" onclick="joinGame()">دخول 🚀</button>
+        </div>
+
+        <div id="p-dashboard" style="display:none; width:100%; padding:10px;">
+            <div style="display:flex; justify-content:center; align-items:center; margin-bottom:15px; background:rgba(0,0,0,0.5); padding:10px; border-radius:15px;">
+                <h3 id="p-my-name" style="margin:0; color:var(--primary);">...</h3>
+            </div>
+
+            <div id="p-wait" class="glass-panel" style="display:none; margin: 0 auto;">
+                <h1 style="font-size:3rem; margin:10px;">⏳</h1>
+                <h3>انتظر اللاعبين...</h3>
+                <p style="color:#aaa;" id="p-wait-msg">تم إرسال إجابتك، ننتظر الباقين.</p>
+            </div>
+
+            <div id="p-write" class="glass-panel" style="display:none; margin: 0 auto;">
+                <h2 style="color:var(--gold);">✍️ اكتب جملة غريبة</h2>
+                <p style="color:#ccc;">اكتب شيء مضحك وصعب الرسم! (مثال: فيل يسبح في قهوة)</p>
+                <input type="text" id="in-write" class="input-text" placeholder="اكتب جملتك هنا...">
+                <button class="btn-main" onclick="submitPhase1()">إرسال الجملة 🚀</button>
+            </div>
+
+            <div id="p-draw" class="glass-panel" style="display:none; margin: 0 auto; padding:10px;">
+                <h2 style="color:var(--secondary); margin-bottom:5px;">🎨 ارسم هذي الجملة:</h2>
+                <h3 id="draw-prompt" style="color:white; background:rgba(255,255,255,0.1); padding:10px; border-radius:10px;">...</h3>
+                
+                <canvas id="draw-canvas" width="400" height="400"></canvas>
+                
+                <div class="color-palette">
+                    <div class="color-btn active" style="background:black;" onclick="setColor('black', this)"></div>
+                    <div class="color-btn" style="background:red;" onclick="setColor('red', this)"></div>
+                    <div class="color-btn" style="background:blue;" onclick="setColor('blue', this)"></div>
+                    <div class="color-btn" style="background:green;" onclick="setColor('green', this)"></div>
+                    <div class="color-btn" style="background:white; border-color:#ccc;" onclick="setColor('white', this)" title="ممحاة">🧹</div>
+                </div>
+                
+                <div style="display:flex; gap:10px;">
+                    <button class="btn-main" style="background:#555; font-size:1rem; padding:10px;" onclick="clearCanvas()">مسح الكل</button>
+                    <button class="btn-main btn-green" style="font-size:1rem; padding:10px;" onclick="submitPhase2()">إرسال الرسمة 🚀</button>
+                </div>
+            </div>
+
+            <div id="p-guess" class="glass-panel" style="display:none; margin: 0 auto;">
+                <h2 style="color:var(--accent);">🤔 وش هذي الرسمة؟</h2>
+                <img id="guess-img" src="" style="width:100%; max-width:400px; background:white; border-radius:15px; border:3px solid var(--primary); margin-bottom:15px;">
+                <input type="text" id="in-guess" class="input-text" placeholder="اكتب تخمينك...">
+                <button class="btn-main" onclick="submitPhase3()">إرسال التخمين 🚀</button>
+            </div>
+            
+            <div id="p-look-tv" class="glass-panel" style="display:none; margin: 0 auto;">
+                <h1 style="font-size:4rem; margin:10px;">📺</h1>
+                <h2 style="color:var(--gold);">ارفع رأسك وشوف الشاشة!</h2>
+                <p>وقت الفضايح والضحك 😂</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="scr-admin" class="screen">
+        <div class="glass-panel" style="margin-top:20px;">
+            <h2 style="color:var(--primary); margin-top:0;">🎮 لوحة التحكم</h2>
+            
+            <div id="admin-controls" style="display:flex; flex-direction:column; gap:10px; margin-bottom:20px;">
+                <button class="btn-main" onclick="startGame()">1️⃣ بدء اللعبة (مرحلة الكتابة)</button>
+                <button class="btn-main btn-disabled" id="btn-adm-2" onclick="forceNextPhase('draw')">2️⃣ انتقال لمرحلة الرسم 🎨</button>
+                <button class="btn-main btn-disabled" id="btn-adm-3" onclick="forceNextPhase('guess')">3️⃣ انتقال لمرحلة التخمين 🤔</button>
+                <button class="btn-main btn-disabled" id="btn-adm-4" onclick="startPresentation()">4️⃣ عرض النتائج (الشاشة) 📺</button>
+            </div>
+            
+            <div id="admin-pres-controls" style="display:none; background:rgba(0,0,0,0.5); padding:15px; border-radius:15px; margin-bottom:20px;">
+                <h3 style="color:var(--gold);">تحكم العرض</h3>
+                <div id="pres-players-list" style="display:flex; flex-direction:column; gap:10px;"></div>
+                <button class="btn-main" style="margin-top:20px;" onclick="nextPresStep()">▶️ الخطوة التالية في العرض</button>
+            </div>
+
+            <button class="btn-main" style="background:var(--danger);" onclick="resetGame()">⚠️ إنهاء وتصفير اللعبة</button>
+            
+            <h3 style="margin-top:30px; border-bottom:1px solid #444; padding-bottom:10px;">حالة اللاعبين</h3>
+            <div id="adm-players-status" class="players-status"></div>
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyDh4v9gRCICA_XRCJXsDpbtCySYAoFsfhk",
+            authDomain: "bagera-word.firebaseapp.com",
+            databaseURL: "https://bagera-word-default-rtdb.firebaseio.com",
+            projectId: "bagera-word",
+            storageBucket: "bagera-word.firebasestorage.app"
+        };
+        try { if(firebase.apps.length === 0) firebase.initializeApp(firebaseConfig); else firebase.app(); } catch(e) {}
+        const db = firebase.database();
+        
+        let roomId = new URLSearchParams(window.location.search).get('room');
+        const role = new URLSearchParams(window.location.search).get('role');
+        let myId = localStorage.getItem('draw_id');
+        let myName = localStorage.getItem('draw_name');
+        let orderArr = [];
+        
+        document.addEventListener("DOMContentLoaded", function() {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            if(role === 'admin') { document.getElementById('scr-admin').classList.add('active'); initAdmin(); }
+            else if(role === 'player') { document.getElementById('scr-player').classList.add('active'); initPlayer(); initCanvas(); }
+            else if(roomId) {
+                if(new URLSearchParams(window.location.search).get('mode') === 'tv') { document.getElementById('scr-tv').classList.add('active'); initTV(); }
+                else { document.getElementById('scr-connect').classList.add('active'); generateQRs(); }
+            } else { document.getElementById('scr-landing').classList.add('active'); }
+        });
+
+        function createGame() {
+            roomId = Math.random().toString(36).substr(2, 6);
+            window.history.pushState({}, '', `?room=${roomId}`);
+            db.ref(`drawgame/${roomId}`).set({ state: 'lobby' });
+            location.reload();
+        }
+        function goTV() { window.location.href = `?room=${roomId}&mode=tv`; }
+
+        function generateQRs() {
+            const base = window.location.href.split('?')[0];
+            const aUrl = base + `?room=${roomId}&role=admin`;
+            document.getElementById('qr-admin').innerHTML=''; new QRCode(document.getElementById('qr-admin'), {text:aUrl, width:100, height:100});
+            setInterval(() => {
+                const pUrl = base + `?room=${roomId}&role=player&scan=${Date.now()}`;
+                const qrP = document.getElementById('qr-players');
+                if(qrP && qrP.offsetParent !== null) { qrP.innerHTML=''; new QRCode(qrP, {text:pUrl, width:200, height:200, colorDark:"#8b5cf6"}); }
+                const qrT = document.getElementById('tv-qr-img');
+                if(qrT && document.getElementById('qr-modal').style.display === 'flex') { qrT.innerHTML=''; new QRCode(qrT, {text:pUrl, width:250, height:250, colorDark:"#8b5cf6"}); }
+            }, 3000);
+        }
+
+        // --- TV Logic ---
+        function initTV() {
+            generateQRs();
+            db.ref(`drawgame/${roomId}`).on('value', snap => {
+                const data = snap.val();
+                if(!data) return;
+
+                const title = document.getElementById('tv-title');
+                const sub = document.getElementById('tv-subtitle');
+                const statusGrid = document.getElementById('tv-players-status');
+                const presDiv = document.getElementById('tv-presentation');
+                
+                statusGrid.innerHTML = '';
+                presDiv.style.display = 'none';
+                statusGrid.style.display = 'grid';
+
+                let players = data.players || {};
+
+                if(data.state === 'lobby') {
+                    title.innerText = "غرفة الانتظار"; sub.innerText = "امسح الباركود للانضمام...";
+                    Object.keys(players).forEach(pid => {
+                        statusGrid.innerHTML += `<div class="status-badge status-done">${players[pid].name} (جاهز)</div>`;
+                    });
+                } 
+                else if (data.state === 'write' || data.state === 'draw' || data.state === 'guess') {
+                    let phaseName = data.state === 'write' ? "مرحلة الكتابة ✍️" : (data.state === 'draw' ? "مرحلة الرسم 🎨" : "مرحلة التخمين 🤔");
+                    let phaseDesc = data.state === 'write' ? "اكتبوا جمل غريبة!" : (data.state === 'draw' ? "ارسموا الجملة اللي وصلتكم!" : "خمنوا وش هذي الرسمة العجيبة!");
+                    title.innerText = phaseName; sub.innerText = phaseDesc;
+                    
+                    Object.keys(players).forEach(pid => {
+                        const p = players[pid];
+                        let isDone = false;
+                        if(data.state === 'write' && data.chains && data.chains[pid] && data.chains[pid].write) isDone = true;
+                        // Find if this player completed their assigned task for draw/guess
+                        if(data.state === 'draw' || data.state === 'guess') {
+                            if(p.status === 'done') isDone = true; 
+                        }
+                        
+                        statusGrid.innerHTML += `<div class="status-badge ${isDone?'status-done':'status-wait'}">${p.name}<br><small>${isDone?'أنهى المهمة ✅':'جاري التفكير...'}</small></div>`;
+                    });
+                }
+                else if (data.state === 'presentation') {
+                    statusGrid.style.display = 'none';
+                    presDiv.style.display = 'flex';
+                    title.innerText = "وقت الفضايح 😂"; sub.innerText = "شوفوا كيف الفكرة تغيرت!";
+                    
+                    if(data.presentation && data.presentation.chainId) {
+                        const chain = data.chains[data.presentation.chainId];
+                        const cAuthor = players[data.presentation.chainId].name;
+                        const step = data.presentation.step;
+                        
+                        let html = '';
+                        if(step >= 1) html += `<div class="pres-card"><div class="pres-author">بدأت الجملة من: ${cAuthor}</div><div class="pres-text">"${chain.write}"</div></div>`;
+                        if(step >= 2) html += `<div class="pres-card"><div class="pres-author">الفنان اللي رسمها: ${players[chain.drawerId].name}</div><img class="pres-img" src="${chain.draw}"></div>`;
+                        if(step >= 3) html += `<div class="pres-card"><div class="pres-author">الضحية اللي خمن: ${players[chain.guesserId].name}</div><div class="pres-text" style="color:var(--danger);">"${chain.guess}"</div></div>`;
+                        
+                        presDiv.innerHTML = html;
+                        // Scroll to bottom
+                        window.scrollTo(0, document.body.scrollHeight);
+                    } else {
+                        presDiv.innerHTML = `<h2 style="color:white;">الأدمن يجهز الملفات السريّة...</h2>`;
+                    }
+                }
+            });
+        }
+
+        // --- Canvas Logic ---
+        let canvas, ctx, isDrawing = false;
+        let currentColor = 'black';
+        function initCanvas() {
+            canvas = document.getElementById('draw-canvas');
+            ctx = canvas.getContext('2d');
+            
+            // Set internal resolution
+            canvas.width = 400;
+            canvas.height = 400;
+            clearCanvas(); // fill white
+
+            const startPos = (e) => { e.preventDefault(); isDrawing = true; draw(e); };
+            const endPos = (e) => { e.preventDefault(); isDrawing = false; ctx.beginPath(); };
+            const draw = (e) => {
+                e.preventDefault();
+                if(!isDrawing) return;
+                const rect = canvas.getBoundingClientRect();
+                const scaleX = canvas.width / rect.width;
+                const scaleY = canvas.height / rect.height;
+                
+                let clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                let clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                
+                let x = (clientX - rect.left) * scaleX;
+                let y = (clientY - rect.top) * scaleY;
+
+                ctx.lineWidth = currentColor === 'white' ? 15 : 4;
+                ctx.lineCap = 'round';
+                ctx.strokeStyle = currentColor;
+
+                ctx.lineTo(x, y);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+            };
+
+            canvas.addEventListener('mousedown', startPos);
+            canvas.addEventListener('mouseup', endPos);
+            canvas.addEventListener('mousemove', draw);
+            
+            canvas.addEventListener('touchstart', startPos, {passive: false});
+            canvas.addEventListener('touchend', endPos, {passive: false});
+            canvas.addEventListener('touchmove', draw, {passive: false});
+        }
+        function setColor(c, btn) {
+            currentColor = c;
+            document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        }
+        function clearCanvas() {
+            ctx.fillStyle = "white";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+
+        // --- Player Logic ---
+        function initPlayer() {
+            if(myId && myName) {
+                document.getElementById('p-login').style.display = 'none';
+                document.getElementById('p-dashboard').style.display = 'block';
+                document.getElementById('p-my-name').innerText = myName;
+                listenGamePlayer();
+            }
+        }
+
+        function joinGame() {
+            const n = document.getElementById('p-name-input').value.trim();
+            if(!n) return alert("اكتب اسمك!");
+            myId = Date.now().toString(); myName = n;
+            localStorage.setItem('draw_id', myId); localStorage.setItem('draw_name', myName);
+            db.ref(`drawgame/${roomId}/players/${myId}`).set({ name: myName, status: 'wait' });
+            document.getElementById('p-login').style.display = 'none';
+            document.getElementById('p-dashboard').style.display = 'block';
+            document.getElementById('p-my-name').innerText = myName;
+            listenGamePlayer();
+        }
+
+        function hidePlayerPanels() {
+            ['p-wait', 'p-write', 'p-draw', 'p-guess', 'p-look-tv'].forEach(id => {
+                document.getElementById(id).style.display = 'none';
+            });
+        }
+
+        let currentTargetChain = null; // Who am I drawing/guessing for?
+
+        function listenGamePlayer() {
+            db.ref(`drawgame/${roomId}`).on('value', snap => {
+                const data = snap.val();
+                if(!data || !data.players || !data.players[myId]) return;
+                
+                const state = data.state;
+                const me = data.players[myId];
+                orderArr = data.order || Object.keys(data.players);
+                
+                hidePlayerPanels();
+
+                if(state === 'lobby') {
+                    document.getElementById('p-wait').style.display = 'block';
+                    document.getElementById('p-wait-msg').innerText = "في انتظار الأدمن لبدء اللعبة...";
+                }
+                else if (state === 'write') {
+                    if(me.status === 'done') { document.getElementById('p-wait').style.display = 'block'; document.getElementById('p-wait-msg').innerText = "تم الإرسال! ننتظر الباقين..."; }
+                    else document.getElementById('p-write').style.display = 'block';
+                }
+                else if (state === 'draw') {
+                    if(me.status === 'done') { document.getElementById('p-wait').style.display = 'block'; document.getElementById('p-wait-msg').innerText = "فنّان! ننتظر الباقين يخلصون رسم..."; }
+                    else {
+                        // Find who I am drawing for (Shift by 1)
+                        let myIdx = orderArr.indexOf(myId);
+                        let targetIdx = (myIdx - 1 + orderArr.length) % orderArr.length;
+                        currentTargetChain = orderArr[targetIdx];
+                        
+                        document.getElementById('p-draw').style.display = 'block';
+                        document.getElementById('draw-prompt').innerText = `"${data.chains[currentTargetChain].write}"`;
+                        // clear canvas once when showing
+                        if(document.getElementById('draw-prompt').getAttribute('data-chain') !== currentTargetChain) {
+                            clearCanvas();
+                            document.getElementById('draw-prompt').setAttribute('data-chain', currentTargetChain);
+                        }
+                    }
+                }
+                else if (state === 'guess') {
+                    if(me.status === 'done') { document.getElementById('p-wait').style.display = 'block'; document.getElementById('p-wait-msg').innerText = "تم الإرسال! ننتظر الباقين..."; }
+                    else {
+                        // Find who I am guessing for (Shift by 2)
+                        let myIdx = orderArr.indexOf(myId);
+                        let targetIdx = (myIdx - 2 + orderArr.length) % orderArr.length;
+                        currentTargetChain = orderArr[targetIdx];
+                        
+                        document.getElementById('p-guess').style.display = 'block';
+                        document.getElementById('guess-img').src = data.chains[currentTargetChain].draw;
+                    }
+                }
+                else if (state === 'presentation') {
+                    document.getElementById('p-look-tv').style.display = 'block';
+                }
+            });
+        }
+
+        function submitPhase1() {
+            const txt = document.getElementById('in-write').value.trim();
+            if(!txt) return alert("اكتب جملة أول!");
+            db.ref(`drawgame/${roomId}/chains/${myId}/write`).set(txt);
+            db.ref(`drawgame/${roomId}/players/${myId}/status`).set('done');
+        }
+
+        function submitPhase2() {
+            const imgData = canvas.toDataURL('image/jpeg', 0.6); // Compress slightly
+            db.ref(`drawgame/${roomId}/chains/${currentTargetChain}/draw`).set(imgData);
+            db.ref(`drawgame/${roomId}/chains/${currentTargetChain}/drawerId`).set(myId);
+            db.ref(`drawgame/${roomId}/players/${myId}/status`).set('done');
+        }
+
+        function submitPhase3() {
+            const txt = document.getElementById('in-guess').value.trim();
+            if(!txt) return alert("اكتب تخمينك أول!");
+            db.ref(`drawgame/${roomId}/chains/${currentTargetChain}/guess`).set(txt);
+            db.ref(`drawgame/${roomId}/chains/${currentTargetChain}/guesserId`).set(myId);
+            db.ref(`drawgame/${roomId}/players/${myId}/status`).set('done');
+        }
+
+        // --- Admin Logic ---
+        function initAdmin() {
+            db.ref(`drawgame/${roomId}`).on('value', snap => {
+                const data = snap.val();
+                if(!data) return;
+
+                // Update Players List
+                const list = document.getElementById('adm-players-status');
+                list.innerHTML = '';
+                let allDone = true;
+                let playerCount = 0;
+                
+                if(data.players) {
+                    Object.keys(data.players).forEach(pid => {
+                        playerCount++;
+                        const p = data.players[pid];
+                        let isDone = (p.status === 'done');
+                        list.innerHTML += `<div class="status-badge ${isDone?'status-done':'status-wait'}">${p.name}</div>`;
+                        if(!isDone) allDone = false;
+                    });
+                }
+
+                // Buttons Enable/Disable logic based on state
+                document.getElementById('btn-adm-2').classList.toggle('btn-disabled', data.state !== 'write');
+                document.getElementById('btn-adm-3').classList.toggle('btn-disabled', data.state !== 'draw');
+                document.getElementById('btn-adm-4').classList.toggle('btn-disabled', data.state !== 'guess');
+                
+                if(data.state === 'presentation') {
+                    document.getElementById('admin-controls').style.display = 'none';
+                    document.getElementById('admin-pres-controls').style.display = 'block';
+                    
+                    // Render Chains to select
+                    const presList = document.getElementById('pres-players-list');
+                    presList.innerHTML = '';
+                    if(data.chains) {
+                        Object.keys(data.chains).forEach(cid => {
+                            const authorName = data.players[cid].name;
+                            const isCurrent = (data.presentation && data.presentation.chainId === cid);
+                            presList.innerHTML += `<button class="btn-main ${isCurrent?'btn-green':''}" onclick="setPresChain('${cid}')" style="font-size:1rem;">عرض تسلسل: ${authorName}</button>`;
+                        });
+                    }
+                } else {
+                    document.getElementById('admin-controls').style.display = 'flex';
+                    document.getElementById('admin-pres-controls').style.display = 'none';
+                }
+            });
+        }
+
+        function startGame() {
+            db.ref(`drawgame/${roomId}/players`).once('value', snap => {
+                const players = snap.val() || {};
+                const pIds = Object.keys(players);
+                if(pIds.length < 3) return alert("تحتاج 3 لاعبين على الأقل للعب التلفون الخربان!");
+                
+                let updates = { state: 'write', order: pIds };
+                pIds.forEach(pid => { updates[`players/${pid}/status`] = 'wait'; });
+                db.ref(`drawgame/${roomId}`).update(updates);
+            });
+        }
+
+        function forceNextPhase(nextState) {
+            db.ref(`drawgame/${roomId}/players`).once('value', snap => {
+                let updates = { state: nextState };
+                Object.keys(snap.val()||{}).forEach(pid => { updates[`players/${pid}/status`] = 'wait'; });
+                db.ref(`drawgame/${roomId}`).update(updates);
+            });
+        }
+
+        function startPresentation() {
+            db.ref(`drawgame/${roomId}`).update({ 
+                state: 'presentation',
+                presentation: { chainId: null, step: 0 }
+            });
+        }
+
+        function setPresChain(chainId) {
+            db.ref(`drawgame/${roomId}/presentation`).set({ chainId: chainId, step: 1 });
+        }
+        
+        function nextPresStep() {
+            db.ref(`drawgame/${roomId}/presentation`).once('value', snap => {
+                let p = snap.val();
+                if(p && p.chainId && p.step < 3) {
+                    db.ref(`drawgame/${roomId}/presentation/step`).set(p.step + 1);
+                }
+            });
+        }
+
+        function resetGame() { 
+            if(confirm('تصفير وحذف الكل؟')) db.ref(`drawgame/${roomId}`).set({state:'lobby'}); 
+        }
+
+    </script>
+</body>
+</html>
