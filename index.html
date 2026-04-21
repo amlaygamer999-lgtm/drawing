@@ -55,13 +55,17 @@
         #draw-canvas { background: white; border-radius: 15px; border: 3px solid var(--primary); cursor: crosshair; touch-action: none; width: 100%; max-width: 400px; height: 400px; display: block; margin: 0 auto; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
         
         .tools-row { display: flex; justify-content: center; gap: 8px; margin: 10px 0; flex-wrap: wrap; }
-        .tool-btn { background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.3); color: white; padding: 8px 15px; border-radius: 10px; cursor: pointer; font-size: 1.2rem; transition: 0.2s; }
+        .tool-btn { background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.3); color: white; padding: 8px 12px; border-radius: 10px; cursor: pointer; font-size: 1.1rem; transition: 0.2s; }
         .tool-btn.active { background: var(--primary); border-color: var(--gold); transform: scale(1.05); }
 
         .color-palette { display: flex; justify-content: center; gap: 8px; margin: 15px 0; flex-wrap: wrap; max-width: 400px; margin: 10px auto; }
-        .color-btn { width: 35px; height: 35px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.5); cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.5); transition: 0.2s;}
+        .color-btn { width: 30px; height: 30px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.5); cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.5); transition: 0.2s;}
         .color-btn.active { border: 3px solid white; transform: scale(1.2); box-shadow: 0 0 10px var(--gold); }
-        .eraser-btn { display: flex; justify-content: center; align-items: center; background: white; font-size: 1.2rem; border-color: #ccc; }
+        
+        /* Range Slider Styles */
+        .slider-container { display: flex; align-items: center; justify-content: space-between; margin: 15px auto; max-width: 350px; background: rgba(0,0,0,0.5); padding: 10px 15px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.1); }
+        .size-slider { -webkit-appearance: none; width: 60%; height: 8px; border-radius: 5px; background: #ddd; outline: none; }
+        .size-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 20px; height: 20px; border-radius: 50%; background: var(--gold); cursor: pointer; box-shadow: 0 0 10px rgba(0,0,0,0.5); }
         
         .input-text { width: 100%; padding: 15px; font-size: 1.5rem; text-align: center; border-radius: 15px; border: 2px solid var(--primary); background: rgba(0,0,0,0.5); color: white; margin-bottom: 20px; font-family: 'Tajawal'; }
         
@@ -167,12 +171,19 @@
                 <h2 style="color:var(--secondary); margin-bottom:5px;">🎨 ارسم:</h2>
                 <h3 id="draw-prompt" style="color:white; background:rgba(255,255,255,0.1); padding:10px; border-radius:10px; margin-bottom:10px;">...</h3>
                 
-                <!-- أدوات الرسم -->
+                <!-- أدوات الرسم الجديدة -->
                 <div class="tools-row">
                     <button class="tool-btn active" onclick="setTool('pen', this)" title="قلم حر">✏️ قلم</button>
+                    <button class="tool-btn" onclick="setTool('eraser', this)" title="ممحاة">🧹 مساحة</button>
                     <button class="tool-btn" onclick="setTool('line', this)" title="خط مستقيم">📏 خط</button>
                     <button class="tool-btn" onclick="setTool('circle', this)" title="دائرة">⭕ دائرة</button>
                     <button class="tool-btn" onclick="setTool('rect', this)" title="مربع/مستطيل">⬜ مربع</button>
+                </div>
+
+                <!-- شريط الحجم (Slider) -->
+                <div class="slider-container">
+                    <span style="color:white; font-weight:bold; font-size:1.1rem;">الحجم: <span id="size-val" style="color:var(--gold);">5</span></span>
+                    <input type="range" id="brush-size" class="size-slider" min="1" max="40" value="5" oninput="updateBrushSize(this.value)">
                 </div>
 
                 <canvas id="draw-canvas" width="400" height="400"></canvas>
@@ -190,7 +201,7 @@
                     <div class="color-btn" style="background:#8b4513;" onclick="setColor('#8b4513', this)"></div>
                     <div class="color-btn" style="background:#06b6d4;" onclick="setColor('#06b6d4', this)"></div>
                     <div class="color-btn" style="background:#64748b;" onclick="setColor('#64748b', this)"></div>
-                    <div class="color-btn eraser-btn" onclick="setColor('white', this)" title="ممحاة">🧹</div>
+                    <div class="color-btn" style="background:#ffffff;" onclick="setColor('#ffffff', this)"></div>
                 </div>
                 
                 <div style="display:flex; gap:10px; margin-top: 10px;">
@@ -203,7 +214,6 @@
             <div id="p-guess" class="glass-panel" style="display:none; margin: 0 auto;">
                 <h2 style="color:var(--accent);">🤔 وش هذي الرسمة؟</h2>
                 
-                <!-- حماية ضد خطأ (الصورة مفقودة) -->
                 <div id="guess-img-error" style="display:none; color:var(--danger); margin-bottom:15px; font-weight:bold; font-size:1.2rem; background:rgba(239,68,68,0.2); padding:10px; border-radius:10px;">
                     ⚠️ اللاعب السابق سحب وما رسم شيء! (خمّن أي كلام من كيسك 😂)
                 </div>
@@ -283,7 +293,7 @@
         function createGame() {
             roomId = Math.random().toString(36).substr(2, 6);
             window.history.pushState({}, '', `?room=${roomId}`);
-            db.ref(`drawgame/${roomId}`).set({ state: 'lobby' });
+            db.ref(`drawgame/${roomId}`).set({ state: 'lobby', round: 1 });
             location.reload();
         }
         function goTV() { window.location.href = `?room=${roomId}&mode=tv`; }
@@ -353,7 +363,6 @@
                         const chain = data.chains[data.presentation.chainId] || {};
                         const step = data.presentation.step;
                         
-                        // حماية متقدمة ضد الأخطاء (لو أحد سحب وماكمل اللعبة)
                         const cAuthor = players[data.presentation.chainId] ? players[data.presentation.chainId].name : 'مجهول';
                         const drawerName = (chain.drawerId && players[chain.drawerId]) ? players[chain.drawerId].name : 'ساحب علينا 🏃‍♂️';
                         const guesserName = (chain.guesserId && players[chain.guesserId]) ? players[chain.guesserId].name : 'ساحب علينا 🏃‍♂️';
@@ -375,7 +384,6 @@
                         
                         presDiv.innerHTML = html;
                         
-                        // النزول التلقائي السلس 100%
                         setTimeout(() => {
                             tvScreen.scrollTo({ top: tvScreen.scrollHeight + 1000, behavior: 'smooth' });
                         }, 100);
@@ -387,10 +395,11 @@
             });
         }
 
-        // --- Canvas Logic (Colors & Shapes) ---
+        // --- Canvas Logic (Colors & Shapes & Eraser & Slider) ---
         let canvas, ctx, isDrawing = false;
         let currentColor = '#000000';
         let currentTool = 'pen';
+        let currentBrushSize = 5;
         let startX, startY;
         let canvasSnapshot;
 
@@ -412,7 +421,7 @@
                 startY = (clientY - rect.top) * scaleY;
                 
                 canvasSnapshot = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                if (currentTool === 'pen') draw(e); 
+                if (currentTool === 'pen' || currentTool === 'eraser') draw(e); 
             };
 
             const endPos = (e) => { 
@@ -432,11 +441,13 @@
                 let x = (clientX - rect.left) * scaleX;
                 let y = (clientY - rect.top) * scaleY;
 
-                ctx.lineWidth = currentColor === 'white' ? 15 : 4;
+                ctx.lineWidth = currentBrushSize;
                 ctx.lineCap = 'round';
-                ctx.strokeStyle = currentColor;
+                
+                // تحديد اللون (لو الأداة ممحاة، اللون أبيض إجباري)
+                ctx.strokeStyle = (currentTool === 'eraser') ? 'white' : currentColor;
 
-                if (currentTool === 'pen') {
+                if (currentTool === 'pen' || currentTool === 'eraser') {
                     ctx.lineTo(x, y);
                     ctx.stroke();
                     ctx.beginPath();
@@ -465,8 +476,18 @@
             canvas.addEventListener('touchmove', draw, {passive: false});
         }
 
+        // تحديث الحجم من الشريط (Slider)
+        function updateBrushSize(val) {
+            currentBrushSize = val;
+            document.getElementById('size-val').innerText = val;
+        }
+
         function setColor(c, btn) {
             currentColor = c;
+            // إذا كان يمسح واختر لون جديد، رجعه تلقائي للقلم
+            if(currentTool === 'eraser') {
+                setTool('pen', document.querySelector('.tool-btn[title="قلم حر"]'));
+            }
             document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
         }
@@ -520,6 +541,7 @@
         }
 
         let currentTargetChain = null; 
+        let currentRound = 0;
 
         function listenGamePlayer() {
             db.ref(`drawgame/${roomId}`).on('value', snap => {
@@ -527,6 +549,7 @@
                 if(!data || !data.players || !data.players[myId]) return;
                 
                 const state = data.state;
+                const dbRound = data.round || 1;
                 const me = data.players[myId];
                 orderArr = data.order || Object.keys(data.players);
                 
@@ -551,9 +574,12 @@
                         
                         document.getElementById('p-draw').style.display = 'block';
                         document.getElementById('draw-prompt').innerText = `"${data.chains[currentTargetChain].write || 'لم يكتب شيء'}"`;
-                        if(document.getElementById('draw-prompt').getAttribute('data-chain') !== currentTargetChain) {
+                        
+                        // فحص ذكي: إذا تغيرت الجولة أو السلسلة، نمسح اللوحة الإجبارية!
+                        let checkKey = currentTargetChain + "-" + dbRound;
+                        if(document.getElementById('draw-prompt').getAttribute('data-chain') !== checkKey) {
                             clearCanvas();
-                            document.getElementById('draw-prompt').setAttribute('data-chain', currentTargetChain);
+                            document.getElementById('draw-prompt').setAttribute('data-chain', checkKey);
                         }
                     }
                 }
@@ -566,7 +592,6 @@
                         
                         document.getElementById('p-guess').style.display = 'block';
                         
-                        // حماية صورة التخمين للاعب
                         const chainData = data.chains[currentTargetChain] || {};
                         const imgEl = document.getElementById('guess-img');
                         const errorEl = document.getElementById('guess-img-error');
@@ -577,7 +602,7 @@
                             errorEl.style.display = 'none';
                         } else {
                             imgEl.style.display = 'none';
-                            errorEl.style.display = 'block'; // تنبيه أن اللاعب السابق ساحب
+                            errorEl.style.display = 'block'; 
                         }
                     }
                 }
@@ -592,6 +617,9 @@
             if(!txt) return alert("اكتب جملة أول!");
             db.ref(`drawgame/${roomId}/chains/${myId}/write`).set(txt);
             db.ref(`drawgame/${roomId}/players/${myId}/status`).set('done');
+            
+            // تنظيف إجباري مسبق للوحة الرسم كاحتياط إضافي
+            clearCanvas();
         }
 
         function submitPhase2() {
@@ -689,18 +717,31 @@
             });
         }
 
+        // --- الميزة الجديدة: إعادة اللعب بنفس اللاعبين ---
         function playAgainSamePlayers() {
             if(confirm('بدء جولة جديدة بنفس اللاعبين؟')) {
-                db.ref(`drawgame/${roomId}/players`).once('value', snap => {
-                    let updates = { state: 'lobby', chains: null, presentation: null, order: null };
-                    Object.keys(snap.val()||{}).forEach(pid => { updates[`players/${pid}/status`] = 'wait'; });
+                db.ref(`drawgame/${roomId}`).once('value', snap => {
+                    const data = snap.val();
+                    let newRound = (data.round || 1) + 1; // تحديث رقم الجولة ضروري لمسح لوحات الرسم
+
+                    let updates = { 
+                        state: 'lobby', 
+                        chains: null, 
+                        presentation: null,
+                        order: null,
+                        round: newRound 
+                    };
+                    
+                    Object.keys(data.players || {}).forEach(pid => { 
+                        updates[`players/${pid}/status`] = 'wait'; 
+                    });
                     db.ref(`drawgame/${roomId}`).update(updates);
                 });
             }
         }
 
         function resetGame() { 
-            if(confirm('تصفير وحذف جميع اللاعبين بالكامل؟')) db.ref(`drawgame/${roomId}`).set({state:'lobby'}); 
+            if(confirm('تصفير وحذف جميع اللاعبين بالكامل؟')) db.ref(`drawgame/${roomId}`).set({state:'lobby', round: 1}); 
         }
 
     </script>
