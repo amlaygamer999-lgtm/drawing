@@ -31,8 +31,7 @@
             background: linear-gradient(135deg, #0f172a 0%, #312e81 100%);
         }
 
-        /* جعل الشاشة قابلة للنزول التلقائي السلس */
-        .screen { display: none; width: 100%; height: 100%; flex-direction: column; align-items: center; justify-content: flex-start; position: absolute; top: 0; left: 0; overflow-y: auto; padding-bottom: 20px; z-index: 10; scroll-behavior: smooth; }
+        .screen { display: none; width: 100%; height: 100%; flex-direction: column; align-items: center; justify-content: flex-start; position: absolute; top: 0; left: 0; overflow-y: auto; padding-bottom: 50px; z-index: 10; scroll-behavior: smooth; }
         .active { display: flex; }
 
         .glass-panel {
@@ -127,7 +126,7 @@
         
         <div id="tv-players-status" class="players-status" style="max-width:800px; margin-bottom: 50px;"></div>
         
-        <div id="tv-presentation" style="display:none; width:100%; flex-direction:column; align-items:center; padding-bottom: 50px;">
+        <div id="tv-presentation" style="display:none; width:100%; flex-direction:column; align-items:center; padding-bottom: 80px;">
             <!-- مساحة عرض النتائج التلقائية -->
         </div>
     </div>
@@ -168,7 +167,7 @@
                 <h2 style="color:var(--secondary); margin-bottom:5px;">🎨 ارسم:</h2>
                 <h3 id="draw-prompt" style="color:white; background:rgba(255,255,255,0.1); padding:10px; border-radius:10px; margin-bottom:10px;">...</h3>
                 
-                <!-- أدوات الرسم الجديدة -->
+                <!-- أدوات الرسم -->
                 <div class="tools-row">
                     <button class="tool-btn active" onclick="setTool('pen', this)" title="قلم حر">✏️ قلم</button>
                     <button class="tool-btn" onclick="setTool('line', this)" title="خط مستقيم">📏 خط</button>
@@ -203,7 +202,13 @@
             <!-- Phase 3: Guess -->
             <div id="p-guess" class="glass-panel" style="display:none; margin: 0 auto;">
                 <h2 style="color:var(--accent);">🤔 وش هذي الرسمة؟</h2>
+                
+                <!-- حماية ضد خطأ (الصورة مفقودة) -->
+                <div id="guess-img-error" style="display:none; color:var(--danger); margin-bottom:15px; font-weight:bold; font-size:1.2rem; background:rgba(239,68,68,0.2); padding:10px; border-radius:10px;">
+                    ⚠️ اللاعب السابق سحب وما رسم شيء! (خمّن أي كلام من كيسك 😂)
+                </div>
                 <img id="guess-img" src="" style="width:100%; max-width:400px; background:white; border-radius:15px; border:3px solid var(--primary); margin-bottom:15px;">
+                
                 <input type="text" id="in-guess" class="input-text" placeholder="اكتب تخمينك هنا...">
                 <button class="btn-main" onclick="submitPhase3()">إرسال التخمين 🚀</button>
             </div>
@@ -235,7 +240,7 @@
                 <div id="pres-players-list" style="display:flex; flex-direction:column; gap:10px;"></div>
                 <button class="btn-main" style="margin-top:20px;" onclick="nextPresStep()">▶️ الخطوة التالية في العرض</button>
                 
-                <!-- زر إعادة اللعبة بنفس اللاعبين (التطوير الجديد) -->
+                <!-- زر إعادة اللعبة بنفس اللاعبين -->
                 <button class="btn-main btn-green" style="margin-top:20px;" onclick="playAgainSamePlayers()">🔄 إعادة اللعب بنفس اللاعبين</button>
             </div>
 
@@ -345,21 +350,35 @@
                     title.innerText = "وقت الفضايح 😂"; sub.innerText = "شوفوا كيف الفكرة تغيرت!";
                     
                     if(data.presentation && data.presentation.chainId) {
-                        const chain = data.chains[data.presentation.chainId];
-                        const cAuthor = players[data.presentation.chainId].name;
+                        const chain = data.chains[data.presentation.chainId] || {};
                         const step = data.presentation.step;
                         
+                        // حماية متقدمة ضد الأخطاء (لو أحد سحب وماكمل اللعبة)
+                        const cAuthor = players[data.presentation.chainId] ? players[data.presentation.chainId].name : 'مجهول';
+                        const drawerName = (chain.drawerId && players[chain.drawerId]) ? players[chain.drawerId].name : 'ساحب علينا 🏃‍♂️';
+                        const guesserName = (chain.guesserId && players[chain.guesserId]) ? players[chain.guesserId].name : 'ساحب علينا 🏃‍♂️';
+
+                        const writeTxt = chain.write || 'لم يكتب شيء';
+                        const drawImg = chain.draw || '';
+                        const guessTxt = chain.guess || 'لم يخمن شيء';
+                        
                         let html = '';
-                        if(step >= 1) html += `<div class="pres-card" id="pres-1"><div class="pres-author">بدأت الجملة من: ${cAuthor}</div><div class="pres-text">"${chain.write}"</div></div>`;
-                        if(step >= 2) html += `<div class="pres-card" id="pres-2"><div class="pres-author">الفنان اللي رسمها: ${players[chain.drawerId].name}</div><img class="pres-img" src="${chain.draw}"></div>`;
-                        if(step >= 3) html += `<div class="pres-card" id="pres-3"><div class="pres-author">الضحية اللي خمن: ${players[chain.guesserId].name}</div><div class="pres-text" style="color:var(--danger);">"${chain.guess}"</div></div>`;
+                        if(step >= 1) html += `<div class="pres-card" id="pres-1"><div class="pres-author">بدأت الجملة من: ${cAuthor}</div><div class="pres-text">"${writeTxt}"</div></div>`;
+                        
+                        if(step >= 2) {
+                            html += `<div class="pres-card" id="pres-2"><div class="pres-author">الفنان اللي رسمها: ${drawerName}</div>`;
+                            if(drawImg) html += `<img class="pres-img" src="${drawImg}"></div>`;
+                            else html += `<div class="pres-text" style="color:var(--danger);">لم يقم بالرسم!</div></div>`;
+                        }
+                        
+                        if(step >= 3) html += `<div class="pres-card" id="pres-3"><div class="pres-author">الضحية اللي خمن: ${guesserName}</div><div class="pres-text" style="color:var(--danger);">"${guessTxt}"</div></div>`;
                         
                         presDiv.innerHTML = html;
                         
-                        // النزول التلقائي السلس للتلفزيون
+                        // النزول التلقائي السلس 100%
                         setTimeout(() => {
-                            tvScreen.scrollTo({ top: tvScreen.scrollHeight, behavior: 'smooth' });
-                        }, 200);
+                            tvScreen.scrollTo({ top: tvScreen.scrollHeight + 1000, behavior: 'smooth' });
+                        }, 100);
 
                     } else {
                         presDiv.innerHTML = `<h2 style="color:white;">الأدمن يجهز الملفات السريّة...</h2>`;
@@ -368,7 +387,7 @@
             });
         }
 
-        // --- Advanced Canvas Logic (Colors & Shapes) ---
+        // --- Canvas Logic (Colors & Shapes) ---
         let canvas, ctx, isDrawing = false;
         let currentColor = '#000000';
         let currentTool = 'pen';
@@ -392,10 +411,8 @@
                 startX = (clientX - rect.left) * scaleX;
                 startY = (clientY - rect.top) * scaleY;
                 
-                // حفظ نسخة من الشاشة قبل رسم الأشكال
                 canvasSnapshot = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                
-                if (currentTool === 'pen') draw(e); // للرسم المباشر
+                if (currentTool === 'pen') draw(e); 
             };
 
             const endPos = (e) => { 
@@ -425,7 +442,6 @@
                     ctx.beginPath();
                     ctx.moveTo(x, y);
                 } else {
-                    // مسح الشاشة واستعادة النسخة المحفوظة للرسم الحي للأشكال
                     ctx.putImageData(canvasSnapshot, 0, 0);
                     ctx.beginPath();
                     if (currentTool === 'line') {
@@ -444,7 +460,6 @@
             canvas.addEventListener('mousedown', startPos);
             canvas.addEventListener('mouseup', endPos);
             canvas.addEventListener('mousemove', draw);
-            
             canvas.addEventListener('touchstart', startPos, {passive: false});
             canvas.addEventListener('touchend', endPos, {passive: false});
             canvas.addEventListener('touchmove', draw, {passive: false});
@@ -471,12 +486,10 @@
         function initPlayer() {
             const urlScanId = new URLSearchParams(window.location.search).get('scan');
             const savedScanId = localStorage.getItem('abadi_last_scan');
-            
             if (urlScanId && urlScanId !== savedScanId) {
                 logoutPlayerSilent();
                 localStorage.setItem('abadi_last_scan', urlScanId);
             }
-
             if(myId && myName) {
                 document.getElementById('p-login').style.display = 'none';
                 document.getElementById('p-dashboard').style.display = 'block';
@@ -485,17 +498,8 @@
             }
         }
         
-        function logoutPlayerSilent() {
-            localStorage.removeItem('abadi_id');
-            localStorage.removeItem('abadi_name');
-            myId = null;
-            myName = null;
-        }
-
-        function logoutPlayer() {
-            logoutPlayerSilent();
-            location.reload();
-        }
+        function logoutPlayerSilent() { localStorage.removeItem('abadi_id'); localStorage.removeItem('abadi_name'); myId = null; myName = null; }
+        function logoutPlayer() { logoutPlayerSilent(); location.reload(); }
 
         function joinGame() {
             const n = document.getElementById('p-name-input').value.trim();
@@ -513,8 +517,6 @@
             ['p-wait', 'p-write', 'p-draw', 'p-guess', 'p-look-tv'].forEach(id => {
                 document.getElementById(id).style.display = 'none';
             });
-            document.getElementById('in-write').value = '';
-            document.getElementById('in-guess').value = '';
         }
 
         let currentTargetChain = null; 
@@ -531,6 +533,8 @@
                 hidePlayerPanels();
 
                 if(state === 'lobby') {
+                    document.getElementById('in-write').value = '';
+                    document.getElementById('in-guess').value = '';
                     document.getElementById('p-wait').style.display = 'block';
                     document.getElementById('p-wait-msg').innerText = "في انتظار الأدمن لبدء اللعبة...";
                 }
@@ -546,7 +550,7 @@
                         currentTargetChain = orderArr[targetIdx];
                         
                         document.getElementById('p-draw').style.display = 'block';
-                        document.getElementById('draw-prompt').innerText = `"${data.chains[currentTargetChain].write}"`;
+                        document.getElementById('draw-prompt').innerText = `"${data.chains[currentTargetChain].write || 'لم يكتب شيء'}"`;
                         if(document.getElementById('draw-prompt').getAttribute('data-chain') !== currentTargetChain) {
                             clearCanvas();
                             document.getElementById('draw-prompt').setAttribute('data-chain', currentTargetChain);
@@ -561,7 +565,20 @@
                         currentTargetChain = orderArr[targetIdx];
                         
                         document.getElementById('p-guess').style.display = 'block';
-                        document.getElementById('guess-img').src = data.chains[currentTargetChain].draw;
+                        
+                        // حماية صورة التخمين للاعب
+                        const chainData = data.chains[currentTargetChain] || {};
+                        const imgEl = document.getElementById('guess-img');
+                        const errorEl = document.getElementById('guess-img-error');
+                        
+                        if(chainData.draw) {
+                            imgEl.src = chainData.draw;
+                            imgEl.style.display = 'block';
+                            errorEl.style.display = 'none';
+                        } else {
+                            imgEl.style.display = 'none';
+                            errorEl.style.display = 'block'; // تنبيه أن اللاعب السابق ساحب
+                        }
                     }
                 }
                 else if (state === 'presentation') {
@@ -585,8 +602,7 @@
         }
 
         function submitPhase3() {
-            const txt = document.getElementById('in-guess').value.trim();
-            if(!txt) return alert("اكتب تخمينك أول!");
+            const txt = document.getElementById('in-guess').value.trim() || 'بدون تخمين';
             db.ref(`drawgame/${roomId}/chains/${currentTargetChain}/guess`).set(txt);
             db.ref(`drawgame/${roomId}/chains/${currentTargetChain}/guesserId`).set(myId);
             db.ref(`drawgame/${roomId}/players/${myId}/status`).set('done');
@@ -673,20 +689,11 @@
             });
         }
 
-        // --- الميزة الجديدة: إعادة اللعب بنفس اللاعبين ---
         function playAgainSamePlayers() {
-            if(confirm('هل تريد بدء جولة جديدة بنفس اللاعبين الحاليين؟')) {
+            if(confirm('بدء جولة جديدة بنفس اللاعبين؟')) {
                 db.ref(`drawgame/${roomId}/players`).once('value', snap => {
-                    let updates = { 
-                        state: 'lobby', 
-                        chains: null, 
-                        presentation: null,
-                        order: null
-                    };
-                    // إرجاع حالة جميع اللاعبين إلى الانتظار
-                    Object.keys(snap.val()||{}).forEach(pid => { 
-                        updates[`players/${pid}/status`] = 'wait'; 
-                    });
+                    let updates = { state: 'lobby', chains: null, presentation: null, order: null };
+                    Object.keys(snap.val()||{}).forEach(pid => { updates[`players/${pid}/status`] = 'wait'; });
                     db.ref(`drawgame/${roomId}`).update(updates);
                 });
             }
