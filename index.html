@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>عباديكاسو PRO 🎨</title>
+    <title>عباديكاسو 🎨</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
@@ -91,11 +91,13 @@
 </head>
 <body>
 
-    <!-- ==================== Landing ==================== -->
-    <div id="scr-landing" class="screen active">
-        <h1 style="font-size:5rem; margin-bottom:0; color:var(--primary); text-align:center;">عباديكاسو <span style="color:var(--secondary);">PRO</span></h1>
-        <p style="font-size:1.5rem; color:#ccc; margin-bottom:40px;">اكتب ✍️ ارسم 🎨 خمّن 🤔</p>
-        <button class="btn-main" style="max-width:300px;" onclick="createGame()">إنشاء غرفة جديدة 🚀</button>
+    <!-- ==================== Landing (شاشة البداية مع صورة عبادي) ==================== -->
+    <div id="scr-landing" class="screen active" style="background-image: url('Painful past.png'); background-size: cover; background-position: center; position: relative;">
+        <!-- الاسم فوق -->
+        <h1 style="font-size:6rem; margin-top:50px; color:white; text-shadow: 0 5px 20px rgba(0,0,0,0.9); text-align:center; width: 100%;">عباديكاسو</h1>
+        
+        <!-- الزر تحت يمين -->
+        <button class="btn-main" style="position: absolute; bottom: 40px; right: 40px; max-width: 250px; font-size: 1.4rem; box-shadow: 0 10px 30px rgba(0,0,0,0.8);" onclick="createGame()">إنشاء غرفة جديدة 🚀</button>
     </div>
 
     <!-- ==================== Connect ==================== -->
@@ -171,7 +173,7 @@
                 <h2 style="color:var(--secondary); margin-bottom:5px;">🎨 ارسم:</h2>
                 <h3 id="draw-prompt" style="color:white; background:rgba(255,255,255,0.1); padding:10px; border-radius:10px; margin-bottom:10px;">...</h3>
                 
-                <!-- أدوات الرسم الجديدة -->
+                <!-- أدوات الرسم -->
                 <div class="tools-row">
                     <button class="tool-btn active" onclick="setTool('pen', this)" title="قلم حر">✏️ قلم</button>
                     <button class="tool-btn" onclick="setTool('eraser', this)" title="ممحاة">🧹 مساحة</button>
@@ -180,7 +182,7 @@
                     <button class="tool-btn" onclick="setTool('rect', this)" title="مربع/مستطيل">⬜ مربع</button>
                 </div>
 
-                <!-- شريط الحجم (Slider) -->
+                <!-- شريط الحجم -->
                 <div class="slider-container">
                     <span style="color:white; font-weight:bold; font-size:1.1rem;">الحجم: <span id="size-val" style="color:var(--gold);">5</span></span>
                     <input type="range" id="brush-size" class="size-slider" min="1" max="40" value="5" oninput="updateBrushSize(this.value)">
@@ -188,7 +190,7 @@
 
                 <canvas id="draw-canvas" width="400" height="400"></canvas>
                 
-                <!-- ألوان موسعة -->
+                <!-- الألوان -->
                 <div class="color-palette">
                     <div class="color-btn active" style="background:#000000;" onclick="setColor('#000000', this)"></div>
                     <div class="color-btn" style="background:#ef4444;" onclick="setColor('#ef4444', this)"></div>
@@ -250,7 +252,6 @@
                 <div id="pres-players-list" style="display:flex; flex-direction:column; gap:10px;"></div>
                 <button class="btn-main" style="margin-top:20px;" onclick="nextPresStep()">▶️ الخطوة التالية في العرض</button>
                 
-                <!-- زر إعادة اللعبة بنفس اللاعبين -->
                 <button class="btn-main btn-green" style="margin-top:20px;" onclick="playAgainSamePlayers()">🔄 إعادة اللعب بنفس اللاعبين</button>
             </div>
 
@@ -313,7 +314,6 @@
             }, 3000);
         }
 
-        // --- TV Logic ---
         function initTV() {
             generateQRs();
             db.ref(`drawgame/${roomId}`).on('value', snap => {
@@ -395,7 +395,6 @@
             });
         }
 
-        // --- Canvas Logic (Colors & Shapes & Eraser & Slider) ---
         let canvas, ctx, isDrawing = false;
         let currentColor = '#000000';
         let currentTool = 'pen';
@@ -444,7 +443,6 @@
                 ctx.lineWidth = currentBrushSize;
                 ctx.lineCap = 'round';
                 
-                // تحديد اللون (لو الأداة ممحاة، اللون أبيض إجباري)
                 ctx.strokeStyle = (currentTool === 'eraser') ? 'white' : currentColor;
 
                 if (currentTool === 'pen' || currentTool === 'eraser') {
@@ -476,7 +474,6 @@
             canvas.addEventListener('touchmove', draw, {passive: false});
         }
 
-        // تحديث الحجم من الشريط (Slider)
         function updateBrushSize(val) {
             currentBrushSize = val;
             document.getElementById('size-val').innerText = val;
@@ -484,7 +481,6 @@
 
         function setColor(c, btn) {
             currentColor = c;
-            // إذا كان يمسح واختر لون جديد، رجعه تلقائي للقلم
             if(currentTool === 'eraser') {
                 setTool('pen', document.querySelector('.tool-btn[title="قلم حر"]'));
             }
@@ -503,7 +499,6 @@
             ctx.fillRect(0, 0, canvas.width, canvas.height);
         }
 
-        // --- Player Logic ---
         function initPlayer() {
             const urlScanId = new URLSearchParams(window.location.search).get('scan');
             const savedScanId = localStorage.getItem('abadi_last_scan');
@@ -541,7 +536,6 @@
         }
 
         let currentTargetChain = null; 
-        let currentRound = 0;
 
         function listenGamePlayer() {
             db.ref(`drawgame/${roomId}`).on('value', snap => {
@@ -575,7 +569,6 @@
                         document.getElementById('p-draw').style.display = 'block';
                         document.getElementById('draw-prompt').innerText = `"${data.chains[currentTargetChain].write || 'لم يكتب شيء'}"`;
                         
-                        // فحص ذكي: إذا تغيرت الجولة أو السلسلة، نمسح اللوحة الإجبارية!
                         let checkKey = currentTargetChain + "-" + dbRound;
                         if(document.getElementById('draw-prompt').getAttribute('data-chain') !== checkKey) {
                             clearCanvas();
@@ -617,8 +610,6 @@
             if(!txt) return alert("اكتب جملة أول!");
             db.ref(`drawgame/${roomId}/chains/${myId}/write`).set(txt);
             db.ref(`drawgame/${roomId}/players/${myId}/status`).set('done');
-            
-            // تنظيف إجباري مسبق للوحة الرسم كاحتياط إضافي
             clearCanvas();
         }
 
@@ -636,7 +627,6 @@
             db.ref(`drawgame/${roomId}/players/${myId}/status`).set('done');
         }
 
-        // --- Admin Logic ---
         function initAdmin() {
             db.ref(`drawgame/${roomId}`).on('value', snap => {
                 const data = snap.val();
@@ -717,12 +707,11 @@
             });
         }
 
-        // --- الميزة الجديدة: إعادة اللعب بنفس اللاعبين ---
         function playAgainSamePlayers() {
             if(confirm('بدء جولة جديدة بنفس اللاعبين؟')) {
                 db.ref(`drawgame/${roomId}`).once('value', snap => {
                     const data = snap.val();
-                    let newRound = (data.round || 1) + 1; // تحديث رقم الجولة ضروري لمسح لوحات الرسم
+                    let newRound = (data.round || 1) + 1; 
 
                     let updates = { 
                         state: 'lobby', 
