@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>عباديكاسو 🎨</title>
     
-    <!-- كود التحميل المسبق السريع للصورة -->
     <link rel="preload" as="image" href="Painful past.png">
 
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -55,7 +54,7 @@
         .btn-disabled { background: #555 !important; box-shadow: none !important; cursor: not-allowed; }
 
         /* Canvas Styles */
-        #draw-canvas { background: white; border-radius: 15px; border: 3px solid var(--primary); cursor: crosshair; touch-action: none; width: 100%; max-width: 400px; height: 400px; display: block; margin: 0 auto; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+        #draw-canvas { background: white; border-radius: 15px; border: 3px solid var(--primary); cursor: crosshair; touch-action: none; width: 100%; max-width: 400px; aspect-ratio: 1/1; display: block; margin: 0 auto; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
         
         .tools-row { display: flex; justify-content: center; gap: 8px; margin: 10px 0; flex-wrap: wrap; }
         .tool-btn { background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.3); color: white; padding: 8px 12px; border-radius: 10px; cursor: pointer; font-size: 1.1rem; transition: 0.2s; }
@@ -71,6 +70,21 @@
         .size-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 20px; height: 20px; border-radius: 50%; background: var(--gold); cursor: pointer; box-shadow: 0 0 10px rgba(0,0,0,0.5); }
         
         .input-text { width: 100%; padding: 15px; font-size: 1.5rem; text-align: center; border-radius: 15px; border: 2px solid var(--primary); background: rgba(0,0,0,0.5); color: white; margin-bottom: 20px; font-family: 'Tajawal'; }
+        
+        /* Fullscreen Drawing Mode Styles */
+        .fs-mode {
+            position: fixed !important;
+            top: 0 !important; left: 0 !important;
+            width: 100vw !important; height: 100vh !important;
+            max-width: 100% !important; border-radius: 0 !important;
+            background: rgba(15, 23, 42, 0.98) !important;
+            z-index: 99999 !important;
+            display: flex !important; flex-direction: column; justify-content: flex-start;
+            padding: 10px !important; overflow-y: auto; border: none !important;
+        }
+        .fs-mode #btn-fs-open { display: none; }
+        .fs-mode #fs-header { display: flex !important; }
+        .fs-mode #draw-canvas { max-width: 95vw; max-height: 45vh; margin-bottom: 10px; }
         
         /* TV Presentation Styles */
         .tv-title { font-size: 4rem; color: var(--gold); text-shadow: 0 0 20px rgba(245,158,11,0.5); margin-bottom: 10px; }
@@ -98,7 +112,6 @@
     <div id="scr-landing" class="screen active" style="background-image: url('Painful\ past.png'); background-size: cover; background-position: center; position: relative;">
         <!-- الاسم فوق -->
         <h1 style="font-size:6rem; margin-top:50px; color:white; text-shadow: 0 5px 20px rgba(0,0,0,0.9); text-align:center; width: 100%;">عباديكاسو</h1>
-        
         <!-- الزر تحت يمين -->
         <button class="btn-main" style="position: absolute; bottom: 40px; right: 40px; max-width: 250px; font-size: 1.4rem; box-shadow: 0 10px 30px rgba(0,0,0,0.8);" onclick="createGame()">إنشاء غرفة جديدة 🚀</button>
     </div>
@@ -134,10 +147,7 @@
         <h2 class="tv-subtitle" id="tv-subtitle">بانتظار بدء اللعبة...</h2>
         
         <div id="tv-players-status" class="players-status" style="max-width:800px; margin-bottom: 50px;"></div>
-        
-        <div id="tv-presentation" style="display:none; width:100%; flex-direction:column; align-items:center; padding-bottom: 80px;">
-            <!-- مساحة عرض النتائج التلقائية -->
-        </div>
+        <div id="tv-presentation" style="display:none; width:100%; flex-direction:column; align-items:center; padding-bottom: 80px;"></div>
     </div>
 
     <!-- ==================== Player Screen ==================== -->
@@ -171,10 +181,22 @@
                 <button class="btn-main" onclick="submitPhase1()">إرسال الجملة 🚀</button>
             </div>
 
-            <!-- Phase 2: Draw -->
+            <!-- Phase 2: Draw (With Fullscreen Feature) -->
             <div id="p-draw" class="glass-panel" style="display:none; margin: 0 auto; padding:10px; width: 100%;">
-                <h2 style="color:var(--secondary); margin-bottom:5px;">🎨 ارسم:</h2>
-                <h3 id="draw-prompt" style="color:white; background:rgba(255,255,255,0.1); padding:10px; border-radius:10px; margin-bottom:10px;">...</h3>
+                
+                <!-- الهيدر في وضع الشاشة الكاملة (مخفي في الوضع العادي) -->
+                <div id="fs-header" style="display:none; width:100%; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                    <h3 id="fs-draw-prompt" style="color:white; margin:0; font-size:1.2rem; background:rgba(255,255,255,0.1); padding:8px; border-radius:10px;">...</h3>
+                    <button onclick="toggleFullscreen()" style="background:var(--danger); color:white; border:none; border-radius:8px; padding:8px 15px; font-weight:bold;">تصغير ❌</button>
+                </div>
+
+                <div id="normal-header">
+                    <h2 style="color:var(--secondary); margin-bottom:5px;">🎨 ارسم:</h2>
+                    <h3 id="draw-prompt" style="color:white; background:rgba(255,255,255,0.1); padding:10px; border-radius:10px; margin-bottom:10px;">...</h3>
+                </div>
+
+                <!-- زر تكبير اللوحة -->
+                <button id="btn-fs-open" class="btn-main" style="background: linear-gradient(135deg, #f59e0b, #d97706); margin-bottom: 15px; width: 100%; font-size: 1.4rem;" onclick="toggleFullscreen()">🔲 تكبير اللوحة للرسم</button>
                 
                 <!-- أدوات الرسم -->
                 <div class="tools-row">
@@ -218,12 +240,10 @@
             <!-- Phase 3: Guess -->
             <div id="p-guess" class="glass-panel" style="display:none; margin: 0 auto;">
                 <h2 style="color:var(--accent);">🤔 وش هذي الرسمة؟</h2>
-                
                 <div id="guess-img-error" style="display:none; color:var(--danger); margin-bottom:15px; font-weight:bold; font-size:1.2rem; background:rgba(239,68,68,0.2); padding:10px; border-radius:10px;">
-                    ⚠️ اللاعب السابق سحب وما رسم شيء! (خمّن أي كلام من كيسك 😂)
+                    ⚠️ اللاعب السابق سحب وما رسم شيء! (خمّن أي كلام 😂)
                 </div>
                 <img id="guess-img" src="" style="width:100%; max-width:400px; background:white; border-radius:15px; border:3px solid var(--primary); margin-bottom:15px;">
-                
                 <input type="text" id="in-guess" class="input-text" placeholder="اكتب تخمينك هنا...">
                 <button class="btn-main" onclick="submitPhase3()">إرسال التخمين 🚀</button>
             </div>
@@ -249,12 +269,10 @@
                 <button class="btn-main btn-disabled" id="btn-adm-4" onclick="startPresentation()">4️⃣ عرض النتائج (الشاشة) 📺</button>
             </div>
             
-            <!-- Presentation Controls -->
             <div id="admin-pres-controls" style="display:none; background:rgba(0,0,0,0.5); padding:15px; border-radius:15px; margin-bottom:20px;">
                 <h3 style="color:var(--gold);">تحكم العرض</h3>
                 <div id="pres-players-list" style="display:flex; flex-direction:column; gap:10px;"></div>
                 <button class="btn-main" style="margin-top:20px;" onclick="nextPresStep()">▶️ الخطوة التالية في العرض</button>
-                
                 <button class="btn-main btn-green" style="margin-top:20px;" onclick="playAgainSamePlayers()">🔄 إعادة اللعب بنفس اللاعبين</button>
             </div>
 
@@ -387,9 +405,7 @@
                         
                         presDiv.innerHTML = html;
                         
-                        setTimeout(() => {
-                            tvScreen.scrollTo({ top: tvScreen.scrollHeight + 1000, behavior: 'smooth' });
-                        }, 100);
+                        setTimeout(() => { tvScreen.scrollTo({ top: tvScreen.scrollHeight + 1000, behavior: 'smooth' }); }, 100);
 
                     } else {
                         presDiv.innerHTML = `<h2 style="color:white;">الأدمن يجهز الملفات السريّة...</h2>`;
@@ -404,6 +420,21 @@
         let currentBrushSize = 5;
         let startX, startY;
         let canvasSnapshot;
+
+        // دالة التكبير والتصغير (Fullscreen Toggle)
+        function toggleFullscreen() {
+            const drawPanel = document.getElementById('p-draw');
+            drawPanel.classList.toggle('fs-mode');
+            
+            if (drawPanel.classList.contains('fs-mode')) {
+                document.getElementById('normal-header').style.display = 'none';
+                document.getElementById('fs-draw-prompt').innerText = document.getElementById('draw-prompt').innerText;
+                document.body.style.overflow = 'hidden'; // منع نزول الصفحة بالخطأ
+            } else {
+                document.getElementById('normal-header').style.display = 'block';
+                document.body.style.overflow = 'auto';
+            }
+        }
 
         function initCanvas() {
             canvas = document.getElementById('draw-canvas');
@@ -477,16 +508,11 @@
             canvas.addEventListener('touchmove', draw, {passive: false});
         }
 
-        function updateBrushSize(val) {
-            currentBrushSize = val;
-            document.getElementById('size-val').innerText = val;
-        }
+        function updateBrushSize(val) { currentBrushSize = val; document.getElementById('size-val').innerText = val; }
 
         function setColor(c, btn) {
             currentColor = c;
-            if(currentTool === 'eraser') {
-                setTool('pen', document.querySelector('.tool-btn[title="قلم حر"]'));
-            }
+            if(currentTool === 'eraser') { setTool('pen', document.querySelector('.tool-btn[title="قلم حر"]')); }
             document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
         }
@@ -497,17 +523,13 @@
             btn.classList.add('active');
         }
 
-        function clearCanvas() {
-            ctx.fillStyle = "white";
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-        }
+        function clearCanvas() { ctx.fillStyle = "white"; ctx.fillRect(0, 0, canvas.width, canvas.height); }
 
         function initPlayer() {
             const urlScanId = new URLSearchParams(window.location.search).get('scan');
             const savedScanId = localStorage.getItem('abadi_last_scan');
             if (urlScanId && urlScanId !== savedScanId) {
-                logoutPlayerSilent();
-                localStorage.setItem('abadi_last_scan', urlScanId);
+                logoutPlayerSilent(); localStorage.setItem('abadi_last_scan', urlScanId);
             }
             if(myId && myName) {
                 document.getElementById('p-login').style.display = 'none';
@@ -536,6 +558,10 @@
             ['p-wait', 'p-write', 'p-draw', 'p-guess', 'p-look-tv'].forEach(id => {
                 document.getElementById(id).style.display = 'none';
             });
+            // إغلاق وضع التكبير تلقائياً إذا كان مفتوح عند الانتقال لمرحلة جديدة
+            document.getElementById('p-draw').classList.remove('fs-mode');
+            document.getElementById('normal-header').style.display = 'block';
+            document.body.style.overflow = 'auto';
         }
 
         let currentTargetChain = null; 
@@ -621,6 +647,11 @@
             db.ref(`drawgame/${roomId}/chains/${currentTargetChain}/draw`).set(imgData);
             db.ref(`drawgame/${roomId}/chains/${currentTargetChain}/drawerId`).set(myId);
             db.ref(`drawgame/${roomId}/players/${myId}/status`).set('done');
+            
+            // إغلاق الشاشة الكاملة لو كانت مفتوحة بعد الإرسال
+            if(document.getElementById('p-draw').classList.contains('fs-mode')) {
+                toggleFullscreen();
+            }
         }
 
         function submitPhase3() {
@@ -697,16 +728,12 @@
             });
         }
 
-        function setPresChain(chainId) {
-            db.ref(`drawgame/${roomId}/presentation`).set({ chainId: chainId, step: 1 });
-        }
+        function setPresChain(chainId) { db.ref(`drawgame/${roomId}/presentation`).set({ chainId: chainId, step: 1 }); }
         
         function nextPresStep() {
             db.ref(`drawgame/${roomId}/presentation`).once('value', snap => {
                 let p = snap.val();
-                if(p && p.chainId && p.step < 3) {
-                    db.ref(`drawgame/${roomId}/presentation/step`).set(p.step + 1);
-                }
+                if(p && p.chainId && p.step < 3) { db.ref(`drawgame/${roomId}/presentation/step`).set(p.step + 1); }
             });
         }
 
@@ -716,25 +743,14 @@
                     const data = snap.val();
                     let newRound = (data.round || 1) + 1; 
 
-                    let updates = { 
-                        state: 'lobby', 
-                        chains: null, 
-                        presentation: null,
-                        order: null,
-                        round: newRound 
-                    };
-                    
-                    Object.keys(data.players || {}).forEach(pid => { 
-                        updates[`players/${pid}/status`] = 'wait'; 
-                    });
+                    let updates = { state: 'lobby', chains: null, presentation: null, order: null, round: newRound };
+                    Object.keys(data.players || {}).forEach(pid => { updates[`players/${pid}/status`] = 'wait'; });
                     db.ref(`drawgame/${roomId}`).update(updates);
                 });
             }
         }
 
-        function resetGame() { 
-            if(confirm('تصفير وحذف جميع اللاعبين بالكامل؟')) db.ref(`drawgame/${roomId}`).set({state:'lobby', round: 1}); 
-        }
+        function resetGame() { if(confirm('تصفير وحذف جميع اللاعبين بالكامل؟')) db.ref(`drawgame/${roomId}`).set({state:'lobby', round: 1}); }
 
     </script>
 </body>
