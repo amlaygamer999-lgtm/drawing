@@ -56,13 +56,13 @@
 
         .input-text { width: 100%; padding: 15px; font-size: 1.5rem; text-align: center; border-radius: 15px; border: 2px solid var(--primary); background: rgba(0,0,0,0.5); color: white; margin-bottom: 20px; font-family: 'Tajawal'; }
         
-        .tools-row { display: flex; justify-content: center; gap: 5px; margin: 8px 0; flex-wrap: wrap; }
-        .tool-btn { background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.3); color: white; padding: 6px 10px; border-radius: 8px; cursor: pointer; font-size: 0.9rem; font-weight:bold; transition: 0.2s; white-space: nowrap; margin-bottom: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.3);}
+        .tools-row { display: flex; justify-content: center; gap: 6px; margin: 10px 0; flex-wrap: nowrap; width: 100%; }
+        .tool-btn { background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.3); color: white; padding: 8px 10px; border-radius: 8px; cursor: pointer; font-size: 0.95rem; font-weight:bold; transition: 0.2s; white-space: nowrap; box-shadow: 0 2px 5px rgba(0,0,0,0.3); flex: 1; text-align: center;}
         .tool-btn.active { background: var(--primary); border-color: var(--gold); transform: scale(1.05); }
         
-        .slider-container { display: flex; align-items: center; justify-content: space-between; margin: 8px auto; max-width: 350px; background: rgba(0,0,0,0.5); padding: 8px 15px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); }
-        .size-slider { -webkit-appearance: none; width: 65%; height: 6px; border-radius: 5px; background: #ddd; outline: none; }
-        .size-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 18px; height: 18px; border-radius: 50%; background: var(--gold); cursor: pointer; box-shadow: 0 0 10px rgba(0,0,0,0.5); }
+        .slider-container { display: flex; align-items: center; justify-content: space-between; margin: 10px auto; max-width: 100%; background: rgba(0,0,0,0.5); padding: 10px 15px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); }
+        .size-slider { -webkit-appearance: none; width: 75%; height: 6px; border-radius: 5px; background: #ddd; outline: none; }
+        .size-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 20px; height: 20px; border-radius: 50%; background: var(--gold); cursor: pointer; box-shadow: 0 0 10px rgba(0,0,0,0.5); }
         
         /* تنسيقات لوحة الألوان المخصصة */
         .color-picker-slider {
@@ -133,19 +133,16 @@
         <div id="tv-presentation" style="display:none; width:100%; flex-direction:column; align-items:center; padding-bottom: 80px;"></div>
     </div>
 
-    <!-- ==================== لوحة اختيار الألوان المخصصة (الجديدة كلياً) ==================== -->
+    <!-- ==================== لوحة اختيار الألوان المخصصة ==================== -->
     <div id="custom-color-modal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.85); z-index:9999999; flex-direction:column; justify-content:center; align-items:center; backdrop-filter:blur(5px);">
         <div class="glass-panel" style="width: 90%; max-width: 400px; padding: 25px;">
             <h3 style="color: white; margin-top: 0; font-size:1.5rem;">اختر لونك 🎨</h3>
 
-            <!-- مربع معاينة اللون النهائي -->
             <div id="preview-color-box" style="width: 100%; height: 70px; border-radius: 15px; background-color: #ff0000; margin-bottom: 20px; border: 3px solid white; box-shadow: 0 5px 15px rgba(0,0,0,0.5);"></div>
 
-            <!-- شريط الألوان الأساسية (ثابت ولا يتغير أبداً) -->
             <label style="color: #ccc; display: block; text-align: right; margin-bottom: 8px; font-weight:bold;">اللون الأساسي:</label>
             <input type="range" id="custom-hue" class="color-picker-slider" min="0" max="360" value="0" style="background: linear-gradient(to right, #ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000);">
 
-            <!-- شريط التدرج والظل (يتأثر باللون الأساسي) -->
             <label style="color: #ccc; display: block; text-align: right; margin-bottom: 8px; font-weight:bold;">الظل (فاتح / غامق):</label>
             <input type="range" id="custom-light" class="color-picker-slider" min="0" max="100" value="50" style="background: linear-gradient(to right, #000000, #ff0000, #ffffff);">
 
@@ -163,7 +160,7 @@
             <button onclick="toggleFullscreen()" style="background:var(--danger); color:white; border:none; padding:8px 15px; border-radius:10px; font-weight:bold; font-size:1rem; box-shadow:0 4px 10px rgba(239,68,68,0.4);">تصغير ❌</button>
         </div>
         <div id="fs-canvas-container" style="flex-grow:1; width:100%; display:flex; justify-content:center; align-items:center; background:#1e293b; padding:10px;"></div>
-        <div id="fs-tools-container" style="background:#0f172a; padding:10px; padding-bottom:20px; box-shadow:0 -4px 15px rgba(0,0,0,0.5); z-index:10;"></div>
+        <div id="fs-tools-container" style="background:#0f172a; padding:15px 10px; padding-bottom:30px; box-shadow:0 -4px 15px rgba(0,0,0,0.5); z-index:10; width:100%;"></div>
     </div>
 
     <!-- ==================== Player Screen ==================== -->
@@ -206,23 +203,24 @@
                 </div>
 
                 <div id="normal-tools-container" style="display:none;">
-                    <div id="tools-wrapper">
+                    <div id="tools-wrapper" style="width: 100%; max-width: 400px; margin: 0 auto;">
                         
+                        <!-- السطر الأول: 4 خيارات مرصوصة جنب بعض -->
                         <div class="tools-row">
                             <button class="tool-btn active" id="pen-btn" onclick="setTool('pen', this)" title="قلم حر">✏️ قلم</button>
                             <button class="tool-btn" onclick="setTool('eraser', this)" title="ممحاة">🧹 مساحة</button>
-                            <button class="tool-btn" onclick="setTool('line', this)" title="خط مستقيم">📏 خط</button>
                             <button class="tool-btn" onclick="setTool('circle', this)" title="دائرة">⭕ دائرة</button>
                             <button class="tool-btn" onclick="setTool('rect', this)" title="مربع/مستطيل">⬜ مربع</button>
                         </div>
                         
+                        <!-- السطر الثاني: 3 خيارات مرصوصة جنب بعض -->
                         <div class="tools-row">
-                            <!-- زر اللون يفتح اللوحة المخصصة اللي صممناها -->
-                            <button class="tool-btn" style="background: linear-gradient(135deg, #ec4899, #8b5cf6); border-color:#fff;" onclick="openCustomColorPicker()">🎨 لون مخصص</button>
+                            <button class="tool-btn" style="background: linear-gradient(135deg, #ec4899, #8b5cf6); border-color:#fff;" onclick="openCustomColorPicker()">🎨 تغيير اللون</button>
                             <button class="tool-btn" style="background:#f59e0b; border-color:#fff;" onclick="undoDraw()">↩️ تراجع</button>
                             <button class="tool-btn" style="background:#ef4444; border-color:#fff;" onclick="clearCanvas()">🗑️ مسح الكل</button>
                         </div>
 
+                        <!-- السطر الثالث: حجم الخط -->
                         <div class="slider-container">
                             <span style="color:white; font-weight:bold; font-size:1rem;">الحجم: <span id="size-val" style="color:var(--gold);">5</span></span>
                             <input type="range" id="brush-size" class="size-slider" min="1" max="40" value="5" oninput="updateBrushSize(this.value)">
@@ -323,22 +321,19 @@
             tempHue = document.getElementById('custom-hue').value;
             tempLight = document.getElementById('custom-light').value;
 
-            // تحديث خلفية شريط الظل فقط بناءً على اللون الأساسي المختار
             let pureColor = `hsl(${tempHue}, 100%, 50%)`;
             document.getElementById('custom-light').style.background = `linear-gradient(to right, #000000, ${pureColor}, #ffffff)`;
 
-            // تحديث مربع المعاينة النهائي
             let finalColor = `hsl(${tempHue}, 100%, ${tempLight}%)`;
             document.getElementById('preview-color-box').style.backgroundColor = finalColor;
         }
 
-        // مستمعات التغيير للأشرطة
         document.getElementById('custom-hue').addEventListener('input', updateCustomColorPreview);
         document.getElementById('custom-light').addEventListener('input', updateCustomColorPreview);
 
         function confirmCustomColor() {
             let finalColor = `hsl(${tempHue}, 100%, ${tempLight}%)`;
-            currentColor = finalColor; // اعتماد اللون
+            currentColor = finalColor; 
             
             if(currentTool === 'eraser') {
                 setTool('pen', document.getElementById('pen-btn'));
@@ -471,7 +466,7 @@
         }
 
         let canvas, ctx, isDrawing = false;
-        let currentColor = '#000000'; // القلم يبدأ أسود دائماً
+        let currentColor = '#000000'; 
         let currentTool = 'pen';
         let currentBrushSize = 5;
         let startX, startY;
@@ -548,10 +543,7 @@
                 } else {
                     ctx.putImageData(canvasSnapshot, 0, 0);
                     ctx.beginPath();
-                    if (currentTool === 'line') {
-                        ctx.moveTo(startX, startY);
-                        ctx.lineTo(x, y);
-                    } else if (currentTool === 'rect') {
+                    if (currentTool === 'rect') {
                         ctx.rect(startX, startY, x - startX, y - startY);
                     } else if (currentTool === 'circle') {
                         let radius = Math.sqrt(Math.pow(x - startX, 2) + Math.pow(y - startY, 2));
