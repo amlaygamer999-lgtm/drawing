@@ -64,6 +64,14 @@
         .size-slider { -webkit-appearance: none; width: 65%; height: 6px; border-radius: 5px; background: #ddd; outline: none; }
         .size-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 18px; height: 18px; border-radius: 50%; background: var(--gold); cursor: pointer; box-shadow: 0 0 10px rgba(0,0,0,0.5); }
         
+        /* تنسيقات لوحة الألوان المخصصة */
+        .color-picker-slider {
+            -webkit-appearance: none; width: 100%; height: 20px; border-radius: 10px; outline: none; margin-bottom: 20px; direction: ltr;
+        }
+        .color-picker-slider::-webkit-slider-thumb {
+            -webkit-appearance: none; appearance: none; width: 25px; height: 25px; border-radius: 50%; background: white; border: 3px solid #333; cursor: pointer; box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        }
+
         .tv-title { font-size: 4rem; color: var(--gold); text-shadow: 0 0 20px rgba(245,158,11,0.5); margin-bottom: 10px; }
         .tv-subtitle { font-size: 2rem; color: var(--primary); margin-bottom: 30px; }
         .pres-card { background: rgba(255,255,255,0.1); border: 2px solid var(--primary); border-radius: 20px; padding: 30px; margin-bottom: 20px; width: 80%; max-width: 800px; text-align: center; animation: fadeIn 0.5s ease-in-out; box-shadow: 0 10px 30px rgba(0,0,0,0.5);}
@@ -125,8 +133,31 @@
         <div id="tv-presentation" style="display:none; width:100%; flex-direction:column; align-items:center; padding-bottom: 80px;"></div>
     </div>
 
+    <!-- ==================== لوحة اختيار الألوان المخصصة (الجديدة كلياً) ==================== -->
+    <div id="custom-color-modal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.85); z-index:9999999; flex-direction:column; justify-content:center; align-items:center; backdrop-filter:blur(5px);">
+        <div class="glass-panel" style="width: 90%; max-width: 400px; padding: 25px;">
+            <h3 style="color: white; margin-top: 0; font-size:1.5rem;">اختر لونك 🎨</h3>
+
+            <!-- مربع معاينة اللون النهائي -->
+            <div id="preview-color-box" style="width: 100%; height: 70px; border-radius: 15px; background-color: #ff0000; margin-bottom: 20px; border: 3px solid white; box-shadow: 0 5px 15px rgba(0,0,0,0.5);"></div>
+
+            <!-- شريط الألوان الأساسية (ثابت ولا يتغير أبداً) -->
+            <label style="color: #ccc; display: block; text-align: right; margin-bottom: 8px; font-weight:bold;">اللون الأساسي:</label>
+            <input type="range" id="custom-hue" class="color-picker-slider" min="0" max="360" value="0" style="background: linear-gradient(to right, #ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000);">
+
+            <!-- شريط التدرج والظل (يتأثر باللون الأساسي) -->
+            <label style="color: #ccc; display: block; text-align: right; margin-bottom: 8px; font-weight:bold;">الظل (فاتح / غامق):</label>
+            <input type="range" id="custom-light" class="color-picker-slider" min="0" max="100" value="50" style="background: linear-gradient(to right, #000000, #ff0000, #ffffff);">
+
+            <div style="display: flex; gap: 10px; margin-top: 15px;">
+                <button class="btn-main" style="background: var(--danger); font-size:1rem;" onclick="document.getElementById('custom-color-modal').style.display='none'">إلغاء ❌</button>
+                <button class="btn-main btn-green" style="font-size:1rem;" onclick="confirmCustomColor()">موافق ✅</button>
+            </div>
+        </div>
+    </div>
+
     <!-- ==================== شاشة الرسم الكاملة (الاستوديو) ==================== -->
-    <div id="fs-drawing-modal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:#0f172a; z-index:999999; flex-direction:column;">
+    <div id="fs-drawing-modal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:#0f172a; z-index:99999; flex-direction:column;">
         <div style="display:flex; justify-content:space-between; align-items:center; background:#0f172a; padding:10px 15px; box-shadow:0 4px 15px rgba(0,0,0,0.5); z-index:10;">
             <h3 id="fs-prompt" style="color:white; margin:0; font-size:1.1rem; line-height:1.4;">...</h3>
             <button onclick="toggleFullscreen()" style="background:var(--danger); color:white; border:none; padding:8px 15px; border-radius:10px; font-weight:bold; font-size:1rem; box-shadow:0 4px 10px rgba(239,68,68,0.4);">تصغير ❌</button>
@@ -186,11 +217,8 @@
                         </div>
                         
                         <div class="tools-row">
-                            <!-- الخدعة هنا: وضعنا القيمة المبدئية للون أزرق ساطع (#00aaff) عشان يطرد الأسهم لليسار ويفك التعليق -->
-                            <div style="position:relative; display:inline-block;">
-                                <button class="tool-btn" style="background: linear-gradient(135deg, #ec4899, #8b5cf6); border-color:#fff;">🎨 لون مخصص</button>
-                                <input type="color" id="native-color" oninput="changeNativeColor(this.value)" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer;" value="#00aaff">
-                            </div>
+                            <!-- زر اللون يفتح اللوحة المخصصة اللي صممناها -->
+                            <button class="tool-btn" style="background: linear-gradient(135deg, #ec4899, #8b5cf6); border-color:#fff;" onclick="openCustomColorPicker()">🎨 لون مخصص</button>
                             <button class="tool-btn" style="background:#f59e0b; border-color:#fff;" onclick="undoDraw()">↩️ تراجع</button>
                             <button class="tool-btn" style="background:#ef4444; border-color:#fff;" onclick="clearCanvas()">🗑️ مسح الكل</button>
                         </div>
@@ -280,11 +308,46 @@
                 if(new URLSearchParams(window.location.search).get('mode') === 'tv') { document.getElementById('scr-tv').classList.add('active'); initTV(); }
                 else { document.getElementById('scr-connect').classList.add('active'); generateQRs(); }
             } else { document.getElementById('scr-landing').classList.add('active'); }
-
-            // للتأكد 100% أن لوحة الألوان مبرمجة على لون ساطع عند التحديث
-            const colorInput = document.getElementById('native-color');
-            if(colorInput) { colorInput.value = '#00aaff'; }
         });
+
+        // ------------------ منطق لوحة الألوان المخصصة ------------------
+        let tempHue = 0;
+        let tempLight = 50;
+
+        function openCustomColorPicker() {
+            document.getElementById('custom-color-modal').style.display = 'flex';
+            updateCustomColorPreview();
+        }
+
+        function updateCustomColorPreview() {
+            tempHue = document.getElementById('custom-hue').value;
+            tempLight = document.getElementById('custom-light').value;
+
+            // تحديث خلفية شريط الظل فقط بناءً على اللون الأساسي المختار
+            let pureColor = `hsl(${tempHue}, 100%, 50%)`;
+            document.getElementById('custom-light').style.background = `linear-gradient(to right, #000000, ${pureColor}, #ffffff)`;
+
+            // تحديث مربع المعاينة النهائي
+            let finalColor = `hsl(${tempHue}, 100%, ${tempLight}%)`;
+            document.getElementById('preview-color-box').style.backgroundColor = finalColor;
+        }
+
+        // مستمعات التغيير للأشرطة
+        document.getElementById('custom-hue').addEventListener('input', updateCustomColorPreview);
+        document.getElementById('custom-light').addEventListener('input', updateCustomColorPreview);
+
+        function confirmCustomColor() {
+            let finalColor = `hsl(${tempHue}, 100%, ${tempLight}%)`;
+            currentColor = finalColor; // اعتماد اللون
+            
+            if(currentTool === 'eraser') {
+                setTool('pen', document.getElementById('pen-btn'));
+            }
+            
+            document.getElementById('custom-color-modal').style.display = 'none';
+        }
+        // ---------------------------------------------------------------
+
 
         function createGame() {
             roomId = Math.random().toString(36).substr(2, 6);
@@ -408,7 +471,7 @@
         }
 
         let canvas, ctx, isDrawing = false;
-        let currentColor = '#000000'; // القلم الأساسي يبدأ أسود دائماً للرسم
+        let currentColor = '#000000'; // القلم يبدأ أسود دائماً
         let currentTool = 'pen';
         let currentBrushSize = 5;
         let startX, startY;
@@ -509,13 +572,6 @@
         function updateBrushSize(val) {
             currentBrushSize = val;
             document.getElementById('size-val').innerText = val;
-        }
-
-        function changeNativeColor(val) {
-            currentColor = val;
-            if(currentTool === 'eraser') {
-                setTool('pen', document.getElementById('pen-btn'));
-            }
         }
 
         function setTool(tool, btn) {
