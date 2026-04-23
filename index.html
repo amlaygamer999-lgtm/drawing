@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>عباديكاسو 🎨</title>
     
+    <!-- كود التحميل المسبق الصاروخي للخلفية -->
     <link rel="preload" as="image" href="Painful past.png">
 
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -31,6 +32,7 @@
             margin: 0; padding: 0; color: var(--text); height: 100vh; overflow: hidden;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             background: linear-gradient(135deg, #0f172a 0%, #312e81 100%);
+            overscroll-behavior: none;
         }
 
         .screen { display: none; width: 100%; height: 100%; flex-direction: column; align-items: center; justify-content: flex-start; position: absolute; top: 0; left: 0; overflow-y: auto; padding-bottom: 50px; z-index: 10; scroll-behavior: smooth; }
@@ -53,9 +55,9 @@
         .btn-green { background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 5px 20px rgba(16, 185, 129, 0.4); }
         .btn-disabled { background: #555 !important; box-shadow: none !important; cursor: not-allowed; }
 
-        /* Canvas Styles */
-        #draw-canvas { background: white; border-radius: 15px; border: 3px solid var(--primary); cursor: crosshair; touch-action: none; width: 100%; max-width: 400px; aspect-ratio: 1/1; display: block; margin: 0 auto; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+        .input-text { width: 100%; padding: 15px; font-size: 1.5rem; text-align: center; border-radius: 15px; border: 2px solid var(--primary); background: rgba(0,0,0,0.5); color: white; margin-bottom: 20px; font-family: 'Tajawal'; }
         
+        /* أدوات الرسم */
         .tools-row { display: flex; justify-content: center; gap: 8px; margin: 10px 0; flex-wrap: wrap; }
         .tool-btn { background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.3); color: white; padding: 8px 12px; border-radius: 10px; cursor: pointer; font-size: 1.1rem; transition: 0.2s; }
         .tool-btn.active { background: var(--primary); border-color: var(--gold); transform: scale(1.05); }
@@ -64,29 +66,11 @@
         .color-btn { width: 30px; height: 30px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.5); cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.5); transition: 0.2s;}
         .color-btn.active { border: 3px solid white; transform: scale(1.2); box-shadow: 0 0 10px var(--gold); }
         
-        /* Range Slider Styles */
         .slider-container { display: flex; align-items: center; justify-content: space-between; margin: 15px auto; max-width: 350px; background: rgba(0,0,0,0.5); padding: 10px 15px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.1); }
         .size-slider { -webkit-appearance: none; width: 60%; height: 8px; border-radius: 5px; background: #ddd; outline: none; }
         .size-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 20px; height: 20px; border-radius: 50%; background: var(--gold); cursor: pointer; box-shadow: 0 0 10px rgba(0,0,0,0.5); }
         
-        .input-text { width: 100%; padding: 15px; font-size: 1.5rem; text-align: center; border-radius: 15px; border: 2px solid var(--primary); background: rgba(0,0,0,0.5); color: white; margin-bottom: 20px; font-family: 'Tajawal'; }
-        
-        /* Fullscreen Drawing Mode Styles */
-        .fs-mode {
-            position: fixed !important;
-            top: 0 !important; left: 0 !important;
-            width: 100vw !important; height: 100vh !important;
-            max-width: 100% !important; border-radius: 0 !important;
-            background: rgba(15, 23, 42, 0.98) !important;
-            z-index: 99999 !important;
-            display: flex !important; flex-direction: column; justify-content: flex-start;
-            padding: 10px !important; overflow-y: auto; border: none !important;
-        }
-        .fs-mode #btn-fs-open { display: none; }
-        .fs-mode #fs-header { display: flex !important; }
-        .fs-mode #draw-canvas { max-width: 95vw; max-height: 45vh; margin-bottom: 10px; }
-        
-        /* TV Presentation Styles */
+        /* شاشة التلفزيون */
         .tv-title { font-size: 4rem; color: var(--gold); text-shadow: 0 0 20px rgba(245,158,11,0.5); margin-bottom: 10px; }
         .tv-subtitle { font-size: 2rem; color: var(--primary); margin-bottom: 30px; }
         .pres-card { background: rgba(255,255,255,0.1); border: 2px solid var(--primary); border-radius: 20px; padding: 30px; margin-bottom: 20px; width: 80%; max-width: 800px; text-align: center; animation: fadeIn 0.5s ease-in-out; box-shadow: 0 10px 30px rgba(0,0,0,0.5);}
@@ -108,10 +92,11 @@
 </head>
 <body>
 
-    <!-- ==================== Landing ==================== -->
-    <div id="scr-landing" class="screen active" style="background-image: url('Painful\ past.png'); background-size: cover; background-position: center; position: relative;">
+    <!-- ==================== Landing (خلفية عبادي) ==================== -->
+    <div id="scr-landing" class="screen active" style="background-image: url('Painful past.png'); background-size: cover; background-position: center; position: relative;">
         <!-- الاسم فوق -->
-        <h1 style="font-size:6rem; margin-top:50px; color:white; text-shadow: 0 5px 20px rgba(0,0,0,0.9); text-align:center; width: 100%;">عباديكاسو</h1>
+        <h1 style="font-size:6rem; margin-top:50px; color:white; text-shadow: 0 5px 20px rgba(0,0,0,0.9), 0 0 40px var(--primary); text-align:center; width: 100%;">عباديكاسو</h1>
+        
         <!-- الزر تحت يمين -->
         <button class="btn-main" style="position: absolute; bottom: 40px; right: 40px; max-width: 250px; font-size: 1.4rem; box-shadow: 0 10px 30px rgba(0,0,0,0.8);" onclick="createGame()">إنشاء غرفة جديدة 🚀</button>
     </div>
@@ -147,13 +132,33 @@
         <h2 class="tv-subtitle" id="tv-subtitle">بانتظار بدء اللعبة...</h2>
         
         <div id="tv-players-status" class="players-status" style="max-width:800px; margin-bottom: 50px;"></div>
+        
         <div id="tv-presentation" style="display:none; width:100%; flex-direction:column; align-items:center; padding-bottom: 80px;"></div>
+    </div>
+
+    <!-- ==================== شاشة الرسم الكاملة (جديد) ==================== -->
+    <div id="fs-drawing-modal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:#fff; z-index:999999; flex-direction:column;">
+        
+        <!-- الشريط العلوي (الاسم وزر التصغير) -->
+        <div style="display:flex; justify-content:space-between; align-items:center; background:#0f172a; padding:15px 20px; box-shadow:0 4px 15px rgba(0,0,0,0.5); z-index:10;">
+            <h3 id="fs-prompt" style="color:white; margin:0; font-size:1.1rem; line-height:1.4;">...</h3>
+            <button onclick="toggleFullscreen()" style="background:var(--danger); color:white; border:none; padding:8px 15px; border-radius:10px; font-weight:bold; font-size:1.1rem; box-shadow:0 4px 10px rgba(239,68,68,0.4);">تصغير ❌</button>
+        </div>
+
+        <!-- مساحة اللوحة البيضاء -->
+        <div id="fs-canvas-container" style="flex-grow:1; width:100%; background:white; position:relative; display:flex; justify-content:center; align-items:center;">
+            <!-- الكانفاس ينتقل هنا -->
+        </div>
+
+        <!-- صندوق الأدوات السفلي -->
+        <div id="fs-tools-container" style="background:#0f172a; padding:10px; padding-bottom:30px; box-shadow:0 -4px 15px rgba(0,0,0,0.5); z-index:10;">
+            <!-- الأدوات تنتقل هنا -->
+        </div>
     </div>
 
     <!-- ==================== Player Screen ==================== -->
     <div id="scr-player" class="screen">
         
-        <!-- Login -->
         <div id="p-login" class="glass-panel" style="margin-top:50px;">
             <h2 style="color:var(--primary);">اكتب اسمك للعب</h2>
             <input type="text" id="p-name-input" class="input-text" placeholder="اسمك..." maxlength="12">
@@ -181,69 +186,73 @@
                 <button class="btn-main" onclick="submitPhase1()">إرسال الجملة 🚀</button>
             </div>
 
-            <!-- Phase 2: Draw (With Fullscreen Feature) -->
-            <div id="p-draw" class="glass-panel" style="display:none; margin: 0 auto; padding:10px; width: 100%;">
+            <!-- Phase 2: Draw (Normal View) -->
+            <div id="p-draw" class="glass-panel" style="display:none; margin: 0 auto; padding:15px; width: 100%;">
+                <h2 style="color:var(--secondary); margin-bottom:5px;">🎨 ارسم:</h2>
+                <h3 id="draw-prompt" style="color:white; background:rgba(255,255,255,0.1); padding:10px; border-radius:10px; margin-bottom:15px;">...</h3>
                 
-                <!-- الهيدر في وضع الشاشة الكاملة (مخفي في الوضع العادي) -->
-                <div id="fs-header" style="display:none; width:100%; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                    <h3 id="fs-draw-prompt" style="color:white; margin:0; font-size:1.2rem; background:rgba(255,255,255,0.1); padding:8px; border-radius:10px;">...</h3>
-                    <button onclick="toggleFullscreen()" style="background:var(--danger); color:white; border:none; border-radius:8px; padding:8px 15px; font-weight:bold;">تصغير ❌</button>
+                <button class="btn-main" style="background: linear-gradient(135deg, #f59e0b, #d97706); margin-bottom: 15px; width: 100%; font-size: 1.4rem;" onclick="toggleFullscreen()">🔲 تكبير اللوحة للرسم</button>
+
+                <!-- الحاوية في الوضع العادي (للعرض فقط) -->
+                <div id="normal-canvas-container" style="width:100%; max-width:350px; aspect-ratio:4/5; background:white; border-radius:15px; border:3px solid var(--primary); overflow:hidden; margin:0 auto; box-shadow:0 5px 15px rgba(0,0,0,0.5);">
+                    <canvas id="draw-canvas" style="width:100%; height:100%; display:block; touch-action:none;"></canvas>
                 </div>
 
-                <div id="normal-header">
-                    <h2 style="color:var(--secondary); margin-bottom:5px;">🎨 ارسم:</h2>
-                    <h3 id="draw-prompt" style="color:white; background:rgba(255,255,255,0.1); padding:10px; border-radius:10px; margin-bottom:10px;">...</h3>
+                <!-- الأدوات المخفية في الوضع العادي، سيتم نقلها للتكبير -->
+                <div id="normal-tools-container" style="display:none;">
+                    <div id="tools-wrapper">
+                        <!-- أدوات الرسم -->
+                        <div class="tools-row">
+                            <button class="tool-btn active" onclick="setTool('pen', this)" title="قلم حر">✏️ قلم</button>
+                            <button class="tool-btn" onclick="setTool('eraser', this)" title="ممحاة">🧹 مساحة</button>
+                            <button class="tool-btn" onclick="setTool('line', this)" title="خط مستقيم">📏 خط</button>
+                            <button class="tool-btn" onclick="setTool('circle', this)" title="دائرة">⭕ دائرة</button>
+                            <button class="tool-btn" onclick="setTool('rect', this)" title="مربع/مستطيل">⬜ مربع</button>
+                        </div>
+
+                        <!-- شريط الحجم -->
+                        <div class="slider-container">
+                            <span style="color:white; font-weight:bold; font-size:1rem;">الحجم: <span id="size-val" style="color:var(--gold);">5</span></span>
+                            <input type="range" id="brush-size" class="size-slider" min="1" max="40" value="5" oninput="updateBrushSize(this.value)">
+                        </div>
+
+                        <!-- الألوان -->
+                        <div class="color-palette">
+                            <div class="color-btn active" style="background:#000000;" onclick="setColor('#000000', this)"></div>
+                            <div class="color-btn" style="background:#ef4444;" onclick="setColor('#ef4444', this)"></div>
+                            <div class="color-btn" style="background:#3b82f6;" onclick="setColor('#3b82f6', this)"></div>
+                            <div class="color-btn" style="background:#10b981;" onclick="setColor('#10b981', this)"></div>
+                            <div class="color-btn" style="background:#eab308;" onclick="setColor('#eab308', this)"></div>
+                            <div class="color-btn" style="background:#f97316;" onclick="setColor('#f97316', this)"></div>
+                            <div class="color-btn" style="background:#a855f7;" onclick="setColor('#a855f7', this)"></div>
+                            <div class="color-btn" style="background:#ec4899;" onclick="setColor('#ec4899', this)"></div>
+                            <div class="color-btn" style="background:#8b4513;" onclick="setColor('#8b4513', this)"></div>
+                            <div class="color-btn" style="background:#06b6d4;" onclick="setColor('#06b6d4', this)"></div>
+                            <div class="color-btn" style="background:#64748b;" onclick="setColor('#64748b', this)"></div>
+                            <div class="color-btn" style="background:#ffffff;" onclick="setColor('#ffffff', this)"></div>
+                        </div>
+
+                        <div class="tools-row" style="margin-top: 10px;">
+                            <button class="btn-main" style="background:#475569; padding:8px 20px; font-size:1rem; width:auto;" onclick="clearCanvas()">🗑️ مسح اللوحة بالكامل</button>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- زر تكبير اللوحة -->
-                <button id="btn-fs-open" class="btn-main" style="background: linear-gradient(135deg, #f59e0b, #d97706); margin-bottom: 15px; width: 100%; font-size: 1.4rem;" onclick="toggleFullscreen()">🔲 تكبير اللوحة للرسم</button>
-                
-                <!-- أدوات الرسم -->
-                <div class="tools-row">
-                    <button class="tool-btn active" onclick="setTool('pen', this)" title="قلم حر">✏️ قلم</button>
-                    <button class="tool-btn" onclick="setTool('eraser', this)" title="ممحاة">🧹 مساحة</button>
-                    <button class="tool-btn" onclick="setTool('line', this)" title="خط مستقيم">📏 خط</button>
-                    <button class="tool-btn" onclick="setTool('circle', this)" title="دائرة">⭕ دائرة</button>
-                    <button class="tool-btn" onclick="setTool('rect', this)" title="مربع/مستطيل">⬜ مربع</button>
-                </div>
-
-                <!-- شريط الحجم -->
-                <div class="slider-container">
-                    <span style="color:white; font-weight:bold; font-size:1.1rem;">الحجم: <span id="size-val" style="color:var(--gold);">5</span></span>
-                    <input type="range" id="brush-size" class="size-slider" min="1" max="40" value="5" oninput="updateBrushSize(this.value)">
-                </div>
-
-                <canvas id="draw-canvas" width="400" height="400"></canvas>
-                
-                <!-- الألوان -->
-                <div class="color-palette">
-                    <div class="color-btn active" style="background:#000000;" onclick="setColor('#000000', this)"></div>
-                    <div class="color-btn" style="background:#ef4444;" onclick="setColor('#ef4444', this)"></div>
-                    <div class="color-btn" style="background:#3b82f6;" onclick="setColor('#3b82f6', this)"></div>
-                    <div class="color-btn" style="background:#10b981;" onclick="setColor('#10b981', this)"></div>
-                    <div class="color-btn" style="background:#eab308;" onclick="setColor('#eab308', this)"></div>
-                    <div class="color-btn" style="background:#f97316;" onclick="setColor('#f97316', this)"></div>
-                    <div class="color-btn" style="background:#a855f7;" onclick="setColor('#a855f7', this)"></div>
-                    <div class="color-btn" style="background:#ec4899;" onclick="setColor('#ec4899', this)"></div>
-                    <div class="color-btn" style="background:#8b4513;" onclick="setColor('#8b4513', this)"></div>
-                    <div class="color-btn" style="background:#06b6d4;" onclick="setColor('#06b6d4', this)"></div>
-                    <div class="color-btn" style="background:#64748b;" onclick="setColor('#64748b', this)"></div>
-                    <div class="color-btn" style="background:#ffffff;" onclick="setColor('#ffffff', this)"></div>
-                </div>
-                
-                <div style="display:flex; gap:10px; margin-top: 10px;">
-                    <button class="btn-main" style="background:#555; font-size:1rem; padding:10px;" onclick="clearCanvas()">مسح الكل</button>
-                    <button class="btn-main btn-green" style="font-size:1rem; padding:10px;" onclick="submitPhase2()">إرسال الرسمة 🚀</button>
+                <!-- زر الإرسال يظهر في الوضع العادي فقط -->
+                <div style="display:flex; gap:10px; margin-top: 25px;">
+                    <button class="btn-main btn-green" style="font-size:1.3rem; padding:15px;" onclick="submitPhase2()">إرسال الرسمة النهائية 🚀</button>
                 </div>
             </div>
 
             <!-- Phase 3: Guess -->
             <div id="p-guess" class="glass-panel" style="display:none; margin: 0 auto;">
                 <h2 style="color:var(--accent);">🤔 وش هذي الرسمة؟</h2>
+                
                 <div id="guess-img-error" style="display:none; color:var(--danger); margin-bottom:15px; font-weight:bold; font-size:1.2rem; background:rgba(239,68,68,0.2); padding:10px; border-radius:10px;">
                     ⚠️ اللاعب السابق سحب وما رسم شيء! (خمّن أي كلام 😂)
                 </div>
                 <img id="guess-img" src="" style="width:100%; max-width:400px; background:white; border-radius:15px; border:3px solid var(--primary); margin-bottom:15px;">
+                
                 <input type="text" id="in-guess" class="input-text" placeholder="اكتب تخمينك هنا...">
                 <button class="btn-main" onclick="submitPhase3()">إرسال التخمين 🚀</button>
             </div>
@@ -273,6 +282,7 @@
                 <h3 style="color:var(--gold);">تحكم العرض</h3>
                 <div id="pres-players-list" style="display:flex; flex-direction:column; gap:10px;"></div>
                 <button class="btn-main" style="margin-top:20px;" onclick="nextPresStep()">▶️ الخطوة التالية في العرض</button>
+                
                 <button class="btn-main btn-green" style="margin-top:20px;" onclick="playAgainSamePlayers()">🔄 إعادة اللعب بنفس اللاعبين</button>
             </div>
 
@@ -414,6 +424,28 @@
             });
         }
 
+        // --- نظام التكبير (الاستوديو الفني) ---
+        function toggleFullscreen() {
+            const modal = document.getElementById('fs-drawing-modal');
+            const canvas = document.getElementById('draw-canvas');
+            const tools = document.getElementById('tools-wrapper');
+
+            if (modal.style.display === 'none' || modal.style.display === '') {
+                // الدخول لوضع التكبير
+                modal.style.display = 'flex';
+                document.getElementById('fs-canvas-container').appendChild(canvas);
+                document.getElementById('fs-tools-container').appendChild(tools);
+                document.getElementById('fs-prompt').innerText = document.getElementById('draw-prompt').innerText;
+                document.body.style.overflow = 'hidden';
+            } else {
+                // الخروج من وضع التكبير (تصغير)
+                modal.style.display = 'none';
+                document.getElementById('normal-canvas-container').appendChild(canvas);
+                document.getElementById('normal-tools-container').appendChild(tools);
+                document.body.style.overflow = 'auto';
+            }
+        }
+
         let canvas, ctx, isDrawing = false;
         let currentColor = '#000000';
         let currentTool = 'pen';
@@ -421,25 +453,15 @@
         let startX, startY;
         let canvasSnapshot;
 
-        // دالة التكبير والتصغير (Fullscreen Toggle)
-        function toggleFullscreen() {
-            const drawPanel = document.getElementById('p-draw');
-            drawPanel.classList.toggle('fs-mode');
-            
-            if (drawPanel.classList.contains('fs-mode')) {
-                document.getElementById('normal-header').style.display = 'none';
-                document.getElementById('fs-draw-prompt').innerText = document.getElementById('draw-prompt').innerText;
-                document.body.style.overflow = 'hidden'; // منع نزول الصفحة بالخطأ
-            } else {
-                document.getElementById('normal-header').style.display = 'block';
-                document.body.style.overflow = 'auto';
-            }
-        }
-
         function initCanvas() {
             canvas = document.getElementById('draw-canvas');
             ctx = canvas.getContext('2d');
-            canvas.width = 400; canvas.height = 400;
+            
+            // تحديد دقة عالية ومناسبة لشاشات الجوال الطولية لتفادي التمدد والتشوه
+            canvas.width = 600; 
+            canvas.height = Math.floor(600 * (window.innerHeight * 0.7 / window.innerWidth));
+            if(canvas.height < 600) canvas.height = 800; // ضمان أبعاد مناسبة
+
             clearCanvas(); 
 
             const startPos = (e) => { 
@@ -508,11 +530,16 @@
             canvas.addEventListener('touchmove', draw, {passive: false});
         }
 
-        function updateBrushSize(val) { currentBrushSize = val; document.getElementById('size-val').innerText = val; }
+        function updateBrushSize(val) {
+            currentBrushSize = val;
+            document.getElementById('size-val').innerText = val;
+        }
 
         function setColor(c, btn) {
             currentColor = c;
-            if(currentTool === 'eraser') { setTool('pen', document.querySelector('.tool-btn[title="قلم حر"]')); }
+            if(currentTool === 'eraser') {
+                setTool('pen', document.querySelector('.tool-btn[title="قلم حر"]'));
+            }
             document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
         }
@@ -523,13 +550,17 @@
             btn.classList.add('active');
         }
 
-        function clearCanvas() { ctx.fillStyle = "white"; ctx.fillRect(0, 0, canvas.width, canvas.height); }
+        function clearCanvas() {
+            ctx.fillStyle = "white";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
 
         function initPlayer() {
             const urlScanId = new URLSearchParams(window.location.search).get('scan');
             const savedScanId = localStorage.getItem('abadi_last_scan');
             if (urlScanId && urlScanId !== savedScanId) {
-                logoutPlayerSilent(); localStorage.setItem('abadi_last_scan', urlScanId);
+                logoutPlayerSilent();
+                localStorage.setItem('abadi_last_scan', urlScanId);
             }
             if(myId && myName) {
                 document.getElementById('p-login').style.display = 'none';
@@ -558,10 +589,10 @@
             ['p-wait', 'p-write', 'p-draw', 'p-guess', 'p-look-tv'].forEach(id => {
                 document.getElementById(id).style.display = 'none';
             });
-            // إغلاق وضع التكبير تلقائياً إذا كان مفتوح عند الانتقال لمرحلة جديدة
-            document.getElementById('p-draw').classList.remove('fs-mode');
-            document.getElementById('normal-header').style.display = 'block';
-            document.body.style.overflow = 'auto';
+            // العودة للوضع العادي إجبارياً لو كان فاتح التكبير
+            if(document.getElementById('fs-drawing-modal').style.display === 'flex') {
+                toggleFullscreen();
+            }
         }
 
         let currentTargetChain = null; 
@@ -648,10 +679,7 @@
             db.ref(`drawgame/${roomId}/chains/${currentTargetChain}/drawerId`).set(myId);
             db.ref(`drawgame/${roomId}/players/${myId}/status`).set('done');
             
-            // إغلاق الشاشة الكاملة لو كانت مفتوحة بعد الإرسال
-            if(document.getElementById('p-draw').classList.contains('fs-mode')) {
-                toggleFullscreen();
-            }
+            if(document.getElementById('fs-drawing-modal').style.display === 'flex') { toggleFullscreen(); }
         }
 
         function submitPhase3() {
@@ -728,12 +756,16 @@
             });
         }
 
-        function setPresChain(chainId) { db.ref(`drawgame/${roomId}/presentation`).set({ chainId: chainId, step: 1 }); }
+        function setPresChain(chainId) {
+            db.ref(`drawgame/${roomId}/presentation`).set({ chainId: chainId, step: 1 });
+        }
         
         function nextPresStep() {
             db.ref(`drawgame/${roomId}/presentation`).once('value', snap => {
                 let p = snap.val();
-                if(p && p.chainId && p.step < 3) { db.ref(`drawgame/${roomId}/presentation/step`).set(p.step + 1); }
+                if(p && p.chainId && p.step < 3) {
+                    db.ref(`drawgame/${roomId}/presentation/step`).set(p.step + 1);
+                }
             });
         }
 
@@ -743,14 +775,25 @@
                     const data = snap.val();
                     let newRound = (data.round || 1) + 1; 
 
-                    let updates = { state: 'lobby', chains: null, presentation: null, order: null, round: newRound };
-                    Object.keys(data.players || {}).forEach(pid => { updates[`players/${pid}/status`] = 'wait'; });
+                    let updates = { 
+                        state: 'lobby', 
+                        chains: null, 
+                        presentation: null,
+                        order: null,
+                        round: newRound 
+                    };
+                    
+                    Object.keys(data.players || {}).forEach(pid => { 
+                        updates[`players/${pid}/status`] = 'wait'; 
+                    });
                     db.ref(`drawgame/${roomId}`).update(updates);
                 });
             }
         }
 
-        function resetGame() { if(confirm('تصفير وحذف جميع اللاعبين بالكامل؟')) db.ref(`drawgame/${roomId}`).set({state:'lobby', round: 1}); }
+        function resetGame() { 
+            if(confirm('تصفير وحذف جميع اللاعبين بالكامل؟')) db.ref(`drawgame/${roomId}`).set({state:'lobby', round: 1}); 
+        }
 
     </script>
 </body>
